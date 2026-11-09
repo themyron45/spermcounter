@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d0d12">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Análise Espermática Completa — versão atualizada</title>
+<style>
+  /* Fonte local do sistema: mantém o aplicativo independente de conexão. */
+
+  :root {
+    --bg-color: #0d0d12;
+    --card-bg: #16161f;
+    --card-border: rgba(255, 255, 255, 0.08);
+    --text-main: #ffffff;
+    --text-muted: #8b8b9e;
+    --accent: #a855f7;
+    --accent-glow: rgba(168, 85, 247, 0.15);
+    --green: #10b981;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --blue: #3b82f6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+  
+  body { 
+    background-color: var(--bg-color); 
+    color: var(--text-main); 
+    min-height: 100vh; 
+    padding: 16px; 
+    padding-bottom: 90px; 
+    display: flex; 
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  .container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 16px; }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 4px; }
+  .header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px; }
+  
+  .feedback-bar { display: flex; gap: 8px; }
+  .toggle-btn { 
+    background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted); 
+    padding: 8px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+    transition: 0.2s; cursor: pointer;
+  }
+  .toggle-btn.on { color: var(--accent); border-color: var(--accent-glow); background: rgba(168, 85, 247, 0.05); }
+  .toggle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: -80px; left: -80px; 
+    width: 200px; height: 200px; background: var(--accent-glow); 
+    filter: blur(60px); border-radius: 50%; z-index: 0;
+    pointer-events: none;
+  }
+  .card > * { position: relative; z-index: 1; }
+
+  h2 { font-size: 1.1rem; margin-bottom: 16px; font-weight: 600; letter-spacing: -0.5px; }
+  h3 { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; margin: 20px 0 10px; font-weight: 700; }
+
+  label { display: block; font-size: 0.8rem; font-weight: 600; margin: 12px 0 6px; color: var(--text-muted); }
+  select, input, textarea {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--card-border);
+    border-radius: 12px; font-size: 0.95rem; background: rgba(255,255,255,0.03);
+    color: var(--text-main); font-family: inherit; transition: 0.2s;
+  }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,0.06); }
+  select option { background: var(--bg-color); color: var(--text-main); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media(max-width: 500px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .btn-primary { 
+    background: var(--accent); color: #fff; width: 100%; margin-top: 20px; 
+    padding: 14px; border-radius: 14px; font-size: 1rem; font-weight: 700; 
+    border: none; cursor: pointer; transition: 0.2s;
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+
+  button { border: none; cursor: pointer; font-family: inherit; }
+  
+  .tabs { display: flex; background: var(--card-bg); padding: 6px; border-radius: 16px; border: 1px solid var(--card-border); margin-bottom: 10px; }
+  .tab { 
+    flex: 1; text-align: center; padding: 10px; font-size: 0.8rem; font-weight: 600; 
+    color: var(--text-muted); border-radius: 12px; background: transparent; transition: 0.2s;
+  }
+  .tab.active { background: rgba(255,255,255,0.1); color: var(--text-main); box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+  .tab:disabled { opacity: 0.4; }
+
+  .info-lamina { 
+    background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 0.75rem; 
+    padding: 6px 12px; border-radius: 20px; display: inline-block; margin-bottom: 16px; font-weight: 600;
+  }
+
+  .aviso-metodo {
+    background: rgba(168, 85, 247, 0.1); border-left: 3px solid var(--accent);
+    padding: 10px 14px; border-radius: 8px; font-size: 0.75rem; margin-bottom: 16px;
+    color: #d8b4fe; line-height: 1.5;
+  }
+  .aviso-metodo b { color: #fff; }
+
+  .main-counter { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0 20px; }
+  .circle-progress {
+    width: 200px; height: 200px; border-radius: 50%;
+    background: conic-gradient(var(--accent) 0%, rgba(255,255,255,0.05) 0);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px var(--accent-glow);
+    transition: background 0.3s ease;
+  }
+  .circle-inner {
+    width: 180px; height: 180px; border-radius: 50%;
+    background: var(--card-bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .circle-inner .number { font-size: 3.5rem; font-weight: 700; line-height: 1; }
+  .circle-inner .label { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; font-weight: 600; }
+
+  .counters-mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+  .mini-counter { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid var(--card-border); }
+  .mini-counter .num { font-size: 1.2rem; font-weight: 700; }
+  .mini-counter .lbl { font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+  .mini-counter.green .num { color: var(--green); }
+  .mini-counter.red .num { color: var(--red); }
+  .mini-counter.purple .num { color: var(--accent); }
+
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn-count {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+    border-radius: 16px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center;
+    transition: 0.1s; color: var(--text-main);
+  }
+  .btn-count:active { transform: scale(0.96); background: rgba(255,255,255,0.08); }
+  .btn-count .icon { font-size: 1.8rem; margin-bottom: 8px; }
+  .btn-count .title { font-size: 0.95rem; font-weight: 700; }
+  .btn-count .sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+  .btn-green .icon { color: var(--green); }
+  .btn-red .icon { color: var(--red); }
+
+  .morfo-list { display: flex; flex-direction: column; gap: 8px; }
+  .morfo-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.02); padding: 12px 16px; border-radius: 12px;
+    border: 1px solid transparent; transition: 0.1s; color: var(--text-main);
+    text-align: left; width: 100%;
+  }
+  .morfo-item:hover { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); }
+  .morfo-item:active { transform: scale(0.98); }
+  .morfo-info { display: flex; flex-direction: column; }
+  .morfo-name { font-size: 0.9rem; font-weight: 600; }
+  .morfo-cat { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .morfo-badge {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    min-width: 36px; height: 36px; padding: 0 8px; border-radius: 18px; 
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  }
+  .morfo-item.btn-normal { border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05); }
+  .morfo-item.btn-normal .morfo-badge { color: var(--green); }
+  
+  .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .btn-action { 
+    flex: 1; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; 
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-undo { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+  .btn-zerar { background: rgba(239, 68, 68, 0.1); color: var(--red); }
+  .btn-save { background: var(--accent); color: #fff; flex: 2; }
+  .btn-save:disabled { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+  /* Histórico */
+  .filters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  @media(max-width: 600px) { .filters { grid-template-columns: 1fr 1fr; } }
+  .filters select { padding: 8px 10px; font-size: 0.75rem; }
+  
+  .resumo-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .stat-box { background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; text-align: center; }
+  .stat-box .val { font-size: 1.3rem; font-weight: 700; }
+  .stat-box .lbl { font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+  .stat-box.halo .val { color: var(--blue); }
+  .stat-box.viab .val { color: var(--green); }
+  .stat-box.morfo .val { color: var(--orange); }
+
+  .hist-list { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .hist-card { 
+    background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); 
+    border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    position: relative;
+  }
+  .hist-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .hist-title { font-size: 1rem; font-weight: 700; color: var(--text-main); }
+  .hist-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .hist-sub span { background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; }
+  .hist-delete { background: none; color: var(--text-muted); font-size: 1.1rem; padding: 4px; transition: 0.2s; }
+  .hist-delete:hover { color: var(--red); }
+  
+  .hist-badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .hist-badge { 
+    background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); 
+    border-radius: 10px; padding: 8px; text-align: center; 
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  }
+  .hist-badge .val { font-size: 1.1rem; font-weight: 700; }
+  .hist-badge .lbl { font-size: 0.55rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.5px; }
+  
+  .hist-badge.halo .val { color: var(--blue); }
+  .hist-badge.viab .val { color: var(--green); }
+  .hist-badge.morfo .val { color: var(--orange); }
+  .hist-badge.empty .val { color: var(--text-muted); font-size: 0.9rem; font-weight: 400; }
+
+  /* Exportação e PDF */
+  .export-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--card-border); }
+  .export-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .export-group h3 { margin-top: 0; margin-bottom: 10px; }
+  .export-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .export-btns button { padding: 10px 14px; font-size: 0.8rem; border-radius: 10px; font-weight: 600; background: rgba(255,255,255,0.05); color: var(--text-main); }
+  .export-btns button:hover { background: rgba(255,255,255,0.1); }
+  .exp-halo { color: #60a5fa !important; } .exp-viab { color: #34d399 !important; } .exp-morfo { color: #a78bfa !important; }
+  
+  .btn-pdf { background: rgba(239, 68, 68, 0.15) !important; color: #fca5a5 !important; font-weight: 700 !important; border: 1px solid rgba(239, 68, 68, 0.3) !important; }
+  .btn-pdf:hover { background: rgba(239, 68, 68, 0.25) !important; }
+
+  /* Barra de Navegação Inferior */
+  .bottom-nav {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(22, 22, 31, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--card-border); border-radius: 30px;
+    display: flex; gap: 6px; padding: 8px 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    z-index: 100;
+  }
+  .nav-item { 
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--text-muted); font-size: 0.6rem; font-weight: 600; gap: 4px; 
+    padding: 8px 14px; border-radius: 20px; cursor: pointer; transition: 0.2s;
+    background: transparent; border: none;
+  }
+  .nav-item.active { color: var(--accent); background: rgba(168, 85, 247, 0.1); }
+  .nav-icon { font-size: 1.1rem; }
+
+  /* Modal */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
+  .modal { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 24px; max-width: 600px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.8); color: var(--text-main); }
+  .modal h3 { margin-top: 0; margin-bottom: 16px; font-size: 1.1rem; text-transform: none; letter-spacing: 0; color: #fff; }
+  .modal .resumo-item { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 0.85rem; }
+  .modal .resumo-item b { color: #fff; }
+  .modal .aviso { padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px; line-height: 1.5; }
+  .modal .aviso-erro { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+  .modal .aviso-info { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+  .modal .acoes { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .modal .acoes button { flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; border: none; }
+  .modal .btn-confirmar { background: var(--accent); color: #fff; }
+  .modal .btn-cancelar { background: rgba(255,255,255,0.1); color: var(--text-muted); }
+  .modal table { font-size: 0.8rem; width: 100%; border-collapse: collapse; }
+  .modal th, .modal td { padding: 8px 4px; border-bottom: 1px solid var(--card-border); text-align: left; }
+  .modal .conflito { background: rgba(245, 158, 11, 0.1); }
+
+  .empty { color: var(--text-muted); text-align: center; padding: 30px; font-style: italic; font-size: 0.9rem; }
+  .hidden { display: none !important; }
+
+  /* ===== Sem menu de seleção de texto durante a contagem ===== */
+  html, body { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  body, .container, .modal-backdrop {
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+  input, textarea, select { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+  button, .tab, .nav-item, .morfo-item, .btn-count, .circle-progress {
+    touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+
+  /* Toasts */
+  .toast-wrap { position: fixed; left: 50%; transform: translateX(-50%); bottom: 96px; z-index: 10000;
+    display: flex; flex-direction: column; gap: 8px; width: calc(100% - 32px); max-width: 420px; pointer-events: none; }
+  .toast { pointer-events: auto; background: #20202c; border: 1px solid var(--card-border); border-left: 4px solid var(--accent);
+    border-radius: 14px; padding: 12px 14px; font-size: 0.85rem; line-height: 1.4; display: flex; gap: 10px;
+    align-items: center; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.6); animation: toastIn .18s ease-out; }
+  .toast span { white-space: pre-line; }
+  .toast.ok { border-left-color: var(--green); }
+  .toast.erro { border-left-color: var(--red); }
+  .toast.aviso { border-left-color: var(--orange); }
+  .toast button { background: rgba(168,85,247,0.2); color: #d8b4fe; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* Timer da lâmina */
+  .topo-lamina { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .topo-lamina .info-lamina { margin-bottom: 0; }
+  .timer-box { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border-radius: 20px;
+    padding: 4px 4px 4px 12px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .timer-box button { background: rgba(255,255,255,0.08); color: var(--text-main); border-radius: 16px; padding: 6px 10px; font-size: 0.7rem; font-weight: 700; }
+  .timer-box.pausado { color: var(--orange); }
+
+  .banner-backup { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35); color: #fcd34d;
+    border-radius: 14px; padding: 10px 14px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .banner-backup button { background: rgba(245,158,11,0.25); color: #fde68a; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; flex-shrink: 0; }
+  .btn-secondary { width: 100%; margin-top: 10px; padding: 12px; border-radius: 14px; font-size: 0.85rem; font-weight: 600;
+    background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--card-border); }
+  .hist-tempo { font-size: 0.7rem; color: var(--text-muted); }
+  .viab-counters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .viab-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .viab-action-grid .btn-count { min-height: 112px; }
+  .viab-action-grid .sub { text-align: center; line-height: 1.35; }
+  .progress-animal { margin-top: 16px; }
+  .progress-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin-top:8px; }
+  .progress-cell button { width:100%; min-height:68px; padding:5px 2px; border:1px solid var(--card-border); border-radius:8px; background:rgba(255,255,255,.03); color:var(--text-main); font-size:.68rem; line-height:1.35; }
+  .progress-cell.done button { border-color:rgba(16,185,129,.5); background:rgba(16,185,129,.12); }
+  .progress-cell.partial button { border-color:rgba(245,158,11,.5); background:rgba(245,158,11,.12); }
+  .progress-cell.lost button { opacity:.55; }
+  @media(max-width:420px) { .viab-action-grid { grid-template-columns:1fr 1fr; } .progress-grid { gap:4px; } .progress-cell button { font-size:.62rem; } }
+  .nav-item { padding: 8px 11px; }
+
+  /* Estatística */
+  #est-resultado, #est-resultado * { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+  .nota { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+  .tab-scroll { overflow-x: auto; margin: 8px 0 12px; }
+  .tab-est { width: 100%; border-collapse: collapse; font-size: 0.72rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tab-est th { color: var(--text-muted); font-weight: 600; text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--card-border); }
+  .tab-est td { text-align: right; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .tab-est th:first-child, .tab-est td:first-child { text-align: left; }
+  .tab-est tr.destaque td { color: #fff; font-weight: 700; }
+  .est-conclusao { border-radius: 10px; padding: 10px 12px; font-size: 0.8rem; line-height: 1.5; margin: 8px 0; }
+  .est-conclusao.sig { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); }
+  .est-conclusao.ns { background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); }
+  .est-conclusao.alerta { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35); }
+  .est-sub { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 14px 0 4px; font-weight: 700; }
+  details.est-det { margin-top: 10px; font-size: 0.78rem; }
+  details.est-det summary { cursor: pointer; color: var(--accent); font-weight: 600; padding: 6px 0; }
+  .est-card { margin-bottom: 16px; }
+  #grafico-evolucao svg { width: 100%; height: auto; display: block; border-radius: 12px; }
+
+  .progress-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0 18px}
+  .progress-cell{padding:8px 3px;border-radius:8px;text-align:center;font-size:.68rem;border:1px solid var(--card-border);background:rgba(255,255,255,.04);color:var(--text-muted)}
+  .progress-cell.done{background:rgba(16,185,129,.14);color:#6ee7b7;border-color:rgba(16,185,129,.3)}
+  .progress-cell.partial{background:rgba(59,130,246,.14);color:#93c5fd;border-color:rgba(59,130,246,.3)}
+  .progress-cell.lost{background:rgba(245,158,11,.14);color:#fcd34d;border-color:rgba(245,158,11,.3)}
+  .progress-cell button{background:transparent;color:inherit;width:100%;font-size:inherit}
+  .progress-animal{border:1px solid var(--card-border);border-radius:14px;padding:12px;margin:10px 0}
+  .hist-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .hist-toolbar input,.hist-toolbar select{flex:1;min-width:120px}
+  .hist-table{width:100%;border-collapse:collapse;font-size:.75rem;min-width:680px}
+  .hist-table th,.hist-table td{padding:9px 7px;border-bottom:1px solid var(--card-border);text-align:left}
+  .hist-table tbody tr:nth-child(even){background:rgba(255,255,255,.035)}
+  .hist-table button,.mini-btn{padding:6px 9px;border-radius:7px;background:rgba(168,85,247,.15);color:#d8b4fe}
+  .hist-group{border:1px solid var(--card-border);border-radius:12px;margin:10px 0;overflow:hidden}
+  .hist-group>summary{padding:12px;cursor:pointer;font-weight:700;background:rgba(255,255,255,.04)}
+  .pdf-preview{background:#fff;color:#111;padding:18px;border-radius:8px}
+  .pdf-preview table{width:100%;border-collapse:collapse;font-size:10px}
+  .pdf-preview th,.pdf-preview td{border:1px solid #ddd;padding:5px;text-align:left}
+  .pdf-preview tbody tr:nth-child(even){background:#f1f1f1}
+  @media print{body{background:#fff;color:#111;padding:0}.bottom-nav,.no-print,button{display:none!important}.container{max-width:none}.card{background:#fff;color:#111;box-shadow:none;border:0;break-inside:avoid}.pdf-preview{padding:0}.pdf-preview table{font-size:9px}}
+</style>
+<!-- Os relatórios em PDF usam a impressão do navegador (Salvar como PDF), inclusive offline. -->
+</head>
+<body>
+<div class="container">
+  
+  <div class="header">
+    <h1>Análise Espermática</h1>
+    <div class="feedback-bar">
+      <button class="toggle-btn" id="tgl-som" onclick="toggleSom()">🔊 Som: ON</button>
+      <button class="toggle-btn" id="tgl-vib" onclick="toggleVibracao()">📳 Vibração: ON</button>
+    </div>
+  </div>
+
+  <div id="banner-backup" class="banner-backup hidden"></div>
+
+  <!-- TELA 1: IDENTIFICAÇÃO -->
+  <div id="tela-id" class="card">
+    <h2>Identificação</h2>
+    
+    <label for="animal">Nome do Animal</label>
+    <select id="animal"></select>
+
+    <div class="grid2">
+      <div>
+        <label for="horario">Resfriamento</label>
+        <select id="horario"></select>
+      </div>
+      <div>
+        <label for="coleta">Coleta</label>
+        <select id="coleta"></select>
+      </div>
+    </div>
+
+    <label for="tratamento">Tratamento</label>
+    <select id="tratamento"></select>
+    
+    <label for="meta">Células por análise</label>
+    <select id="meta" onchange="mudarMeta()"></select>
+
+    <label for="obs">Observações (opcional)</label>
+    <textarea id="obs" rows="2" placeholder="Ex: amostra turva, refiz contagem..."></textarea>
+    
+    <button class="btn-primary" onclick="iniciarAnalise()">▶ Iniciar Análise</button>
+    <button class="btn-secondary hidden" id="btn-reabrir" onclick="reabrirUltima()"></button>
+
+    <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--card-border);">
+      <h3 style="margin-top: 0; margin-bottom: 12px;">Backup e Dados</h3>
+      <div class="export-btns">
+        <button onclick="exportarBackup()" style="flex:1;">⬇ Backup .json</button>
+        <button onclick="document.getElementById('input-restore').click()" style="flex:1; background: rgba(168, 85, 247, 0.15); color: var(--accent);">⬆ Restaurar .json</button>
+        <button onclick="document.getElementById('input-csv-import').click()" style="flex:1;">⬆ Importar CSV/TXT</button>
+      </div>
+      <input type="file" id="input-restore" accept=".json" style="display: none" onchange="restaurarBackup(event)">
+      <input type="file" id="input-csv-import" accept=".csv,.txt" style="display: none" onchange="importarArquivo(event)">
+    </div>
+  </div>
+
+  <!-- TELA 2: CONTAGEM -->
+  <div id="tela-contagem" class="hidden">
+    <div class="topo-lamina">
+      <div class="info-lamina" id="info-lamina"></div>
+      <div class="timer-box" id="timer-box"><span id="timer-txt">⏱ 00:00</span><button id="btn-pausa" onclick="alternarPausa()">⏸ Pausar</button></div>
+    </div>
+    
+    <div class="tabs">
+      <button class="tab active" id="tab-halo" onclick="trocarAba('halo')">🔬 Halo</button>
+      <button class="tab" id="tab-viab" onclick="trocarAba('viab')">💚 Viabilidade</button>
+      <button class="tab" id="tab-morfo" onclick="trocarAba('morfo')">🧬 Morfologia</button>
+    </div>
+
+    <div class="card" style="margin-bottom: 20px;">
+      
+      <!-- ABA HALO -->
+      <div id="pane-halo">
+        <div class="aviso-metodo">🔵 <b>Método HALO</b> — use as teclas <b>S</b> e <b>D</b> ou toque nos botões.</div>
+        <div class="main-counter">
+          <div class="circle-progress" id="h-circle">
+            <div class="circle-inner"><span class="number" id="h-total">0</span><span class="label">de <span class="meta-txt">200</span></span></div>
+          </div>
+        </div>
+        <div class="counters-mini">
+          <div class="mini-counter green"><div class="num" id="h-halo">0</div><div class="lbl">Com Halo</div></div>
+          <div class="mini-counter red"><div class="num" id="h-sem">0</div><div class="lbl">Sem Halo</div></div>
+          <div class="mini-counter purple"><div class="num" id="h-pct">—</div><div class="lbl">% Frag.</div></div>
+        </div>
+        <div class="action-grid">
+          <button class="btn-count btn-green" onclick="registrar('halo','halo')"><div class="icon">✓</div><div class="title">Com Halo</div><div class="sub">Tecla S</div></button>
+          <button class="btn-count btn-red" onclick="registrar('halo','sem')"><div class="icon">✕</div><div class="title">Sem Halo</div><div class="sub">Tecla D</div></button>
+        </div>
+        <div class="action-row">
+          <button class="btn-action btn-undo" onclick="desfazer('halo')">↶ Desfazer</button>
+          <button class="btn-action btn-zerar" onclick="zerarContagem('halo')">🗑 Zerar</button>
+          <button class="btn-action btn-save" id="h-btn-salvar" onclick="salvarAnalise('halo')" disabled>💾 Salvar</button>
+        </div>
+      </div>
+
+      <!-- ABA VIABILIDADE -->
+      <div id="pane-viab" class="hidden">
+        <div class="aviso-metodo">🟢 <b>Método GIEMSA</b> — classifique cada célula pela viabilidade e pela reação acrossômica. Atalhos: <b>S</b>, <b>D</b>, <b>W</b> e <b>E</b>.</div>
+        <div class="main-counter">
+          <div class="circle-progress" id="v-circle">
+            <div class="circle-inner"><span class="number" id="v-total">0</span><span class="label">de <span class="meta-txt">200</span></span></div>
+          </div>
+        </div>
+        <div class="counters-mini viab-counters">
+          <div class="mini-counter green"><div class="num" id="v-vivo-reagido">0</div><div class="lbl">Vivo reagido</div></div>
+          <div class="mini-counter green"><div class="num" id="v-vivo-integro">0</div><div class="lbl">Vivo íntegro</div></div>
+          <div class="mini-counter red"><div class="num" id="v-morto-reagido">0</div><div class="lbl">Morto reagido</div></div>
+          <div class="mini-counter red"><div class="num" id="v-morto-integro">0</div><div class="lbl">Morto íntegro</div></div>
+        </div>
+        <div class="mini-counter purple" style="margin:0 0 14px"><div class="num" id="v-pct">—</div><div class="lbl">% Viabilidade (vivos)</div></div>
+        <div class="action-grid viab-action-grid">
+          <button class="btn-count btn-green" onclick="registrar('viab','vivo_reagido')"><div class="icon">✓</div><div class="title">Vivo reagido</div><div class="sub">Reação acrossômica positiva · S</div></button>
+          <button class="btn-count btn-green" onclick="registrar('viab','vivo_integro')"><div class="icon">✓</div><div class="title">Vivo íntegro</div><div class="sub">Acrossoma preservado · D</div></button>
+          <button class="btn-count btn-red" onclick="registrar('viab','morto_reagido')"><div class="icon">✕</div><div class="title">Morto reagido</div><div class="sub">Reação em célula morta · W</div></button>
+          <button class="btn-count btn-red" onclick="registrar('viab','morto_integro')"><div class="icon">✕</div><div class="title">Morto íntegro</div><div class="sub">Acrossoma preservado · E</div></button>
+        </div>
+        <div id="v-legado-aviso" class="nota hidden">Esta lâmina contém contagens antigas de viável/não viável, sem classificação da reação acrossômica. Elas serão preservadas separadamente.</div>
+        <div class="action-row">
+          <button class="btn-action btn-undo" onclick="desfazer('viab')">↶ Desfazer</button>
+          <button class="btn-action btn-zerar" onclick="zerarContagem('viab')">🗑 Zerar</button>
+          <button class="btn-action btn-save" id="v-btn-salvar" onclick="salvarAnalise('viab')" disabled>💾 Salvar</button>
+        </div>
+      </div>
+
+      <!-- ABA MORFOLOGIA -->
+      <div id="pane-morfo" class="hidden">
+        <div class="aviso-metodo">🟣 <b>Método PANÓTICO RÁPIDO</b> — toque nos itens da lista para contabilizar.</div>
+        <div class="main-counter" style="padding-bottom: 0;">
+          <div class="circle-progress" id="m-circle">
+            <div class="circle-inner"><span class="number" id="m-total">0</span><span class="label">de <span class="meta-txt">200</span></span></div>
+          </div>
+        </div>
+        <div class="counters-mini" style="margin-top: 20px;">
+          <div class="mini-counter green"><div class="num" id="m-normal">0</div><div class="lbl">Normais</div></div>
+          <div class="mini-counter red"><div class="num" id="m-defeitos">0</div><div class="lbl">Defeituosos</div></div>
+          <div class="mini-counter purple"><div class="num" id="m-pctdef">—</div><div class="lbl">% Defeitos</div></div>
+        </div>
+
+        <h3>✅ Normal</h3>
+        <div class="morfo-list">
+          <button class="morfo-item btn-normal" id="btn-normal-morfo" onclick="registrarMorfo('normal', this)"><div class="morfo-info"><span class="morfo-name" style="color: var(--green);">Normal</span><span class="morfo-cat">Sem alteração</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+        </div>
+        <h3>🧠 Cabeça</h3>
+        <div class="morfo-list">
+          <button class="morfo-item" data-tipo="cabeca_redonda" onclick="registrarMorfo('cabeca_redonda', this)"><div class="morfo-info"><span class="morfo-name">Cabeça redonda</span><span class="morfo-cat">Defeito de cabeça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="cabeca_alongada" onclick="registrarMorfo('cabeca_alongada', this)"><div class="morfo-info"><span class="morfo-name">Cabeça alongada</span><span class="morfo-cat">Defeito de cabeça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="cabeca_piriforme" onclick="registrarMorfo('cabeca_piriforme', this)"><div class="morfo-info"><span class="morfo-name">Cabeça piriforme</span><span class="morfo-cat">Defeito de cabeça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="cabeca_amorfa" onclick="registrarMorfo('cabeca_amorfa', this)"><div class="morfo-info"><span class="morfo-name">Cabeça amorfa</span><span class="morfo-cat">Defeito de cabeça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="cabeca_dupla" onclick="registrarMorfo('cabeca_dupla', this)"><div class="morfo-info"><span class="morfo-name">Cabeça dupla</span><span class="morfo-cat">Defeito de cabeça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+        </div>
+        <h3>🧪 Acrossoma</h3>
+        <div class="morfo-list">
+          <button class="morfo-item" data-tipo="defeito_acrossoma" onclick="registrarMorfo('defeito_acrossoma', this)"><div class="morfo-info"><span class="morfo-name">Defeito de acrossoma</span><span class="morfo-cat">Alteração na cabeça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+        </div>
+        <h3>🔗 Peça intermediária</h3>
+        <div class="morfo-list">
+          <button class="morfo-item" data-tipo="peca_dobrada" onclick="registrarMorfo('peca_dobrada', this)"><div class="morfo-info"><span class="morfo-name">Peça interm. dobrada</span><span class="morfo-cat">Defeito de peça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="peca_espessa" onclick="registrarMorfo('peca_espessa', this)"><div class="morfo-info"><span class="morfo-name">Peça interm. espessa</span><span class="morfo-cat">Defeito de peça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="gota_proximal" onclick="registrarMorfo('gota_proximal', this)"><div class="morfo-info"><span class="morfo-name">Gota prox.</span><span class="morfo-cat">Defeito de peça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="gota_distal" onclick="registrarMorfo('gota_distal', this)"><div class="morfo-info"><span class="morfo-name">Gota distal</span><span class="morfo-cat">Defeito de peça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="insercao_abaxial" onclick="registrarMorfo('insercao_abaxial', this)"><div class="morfo-info"><span class="morfo-name">Inserção abaxial</span><span class="morfo-cat">Defeito de peça</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+        </div>
+        <h3>🪢 Cauda</h3>
+        <div class="morfo-list">
+          <button class="morfo-item" data-tipo="cauda_dobrada" onclick="registrarMorfo('cauda_dobrada', this)"><div class="morfo-info"><span class="morfo-name">Cauda dobrada</span><span class="morfo-cat">Defeito de cauda</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="cauda_enrolada" onclick="registrarMorfo('cauda_enrolada', this)"><div class="morfo-info"><span class="morfo-name">Cauda enrolada</span><span class="morfo-cat">Defeito de cauda</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="cauda_curta" onclick="registrarMorfo('cauda_curta', this)"><div class="morfo-info"><span class="morfo-name">Cauda curta</span><span class="morfo-cat">Defeito de cauda</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="cauda_dupla" onclick="registrarMorfo('cauda_dupla', this)"><div class="morfo-info"><span class="morfo-name">Cauda dupla</span><span class="morfo-cat">Defeito de cauda</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+        </div>
+        <h3>⚠️ Outros</h3>
+        <div class="morfo-list">
+          <button class="morfo-item" data-tipo="multiplos" onclick="registrarMorfo('multiplos', this)"><div class="morfo-info"><span class="morfo-name">Múltiplos defeitos</span><span class="morfo-cat">Mais de uma alteração</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+          <button class="morfo-item" data-tipo="outro" onclick="registrarMorfo('outro', this)"><div class="morfo-info"><span class="morfo-name">Outro defeito</span><span class="morfo-cat">Outra alteração</span></div><div class="morfo-badge"><span class="cnt">0</span></div></button>
+        </div>
+        <div class="action-row" style="margin-top: 24px;">
+          <button class="btn-action btn-undo" onclick="desfazer('morfo')">↶ Desfazer</button>
+          <button class="btn-action btn-zerar" onclick="zerarContagem('morfo')">🗑 Zerar</button>
+          <button class="btn-action btn-save" id="m-btn-salvar" onclick="salvarAnalise('morfo')" disabled>💾 Salvar</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid2"><button class="btn-action" onclick="finalizarLamina()" style="background: var(--accent); color: #fff; width: 100%; padding: 16px; border-radius: 14px; font-size: 1rem; font-weight: 700;">🏁 Finalizar Lâmina</button><button class="btn-action" onclick="marcarNaoAnalisavel()" style="background:rgba(245,158,11,.16);color:#fcd34d;width:100%;padding:16px;border-radius:14px;font-weight:700">⚠ Lâmina perdida / não analisável</button></div>
+  </div>
+
+  <!-- TELA 3: HISTÓRICO -->
+  <div id="tela-historico" class="hidden">
+    <div class="card">
+      <h2>Histórico de Lâminas</h2>
+      
+      <div class="filters">
+        <select id="filtro-animal" onchange="renderHistorico()"></select>
+        <select id="filtro-horario" onchange="renderHistorico()"></select>
+        <select id="filtro-coleta" onchange="renderHistorico()"></select>
+        <select id="filtro-tratamento" onchange="renderHistorico()"></select>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;" id="total-laminas">0 lâminas</span>
+      </div>
+
+      <div class="resumo-stats" id="resumo-stats" style="display:none;">
+        <div class="stat-box halo"><div class="val" id="stat-halo">—</div><div class="lbl">Média Halo</div></div>
+        <div class="stat-box viab"><div class="val" id="stat-viab">—</div><div class="lbl">Média Viab.</div></div>
+        <div class="stat-box morfo"><div class="val" id="stat-morfo">—</div><div class="lbl">Média Morfo</div></div>
+      </div>
+
+      <div class="hist-toolbar">
+        <input id="hist-busca" placeholder="Buscar animal, horário, coleta..." oninput="renderHistorico()">
+        <select id="hist-status" onchange="renderHistorico()"><option value="">Todas</option><option value="incompletas">Incompletas</option></select>
+        <select id="hist-ordem" onchange="renderHistorico()"><option value="recentes">Mais recentes</option><option value="animal">Animal</option><option value="horario">Horário</option></select>
+        <select id="hist-modo" onchange="renderHistorico()"><option value="tabela">Tabela compacta</option><option value="cartoes">Cartões</option></select>
+      </div>
+      <div id="historico" class="hist-list"></div>
+      <button id="hist-mais" class="btn-secondary hidden" onclick="carregarMaisHistorico()">Carregar mais 30</button>
+    </div>
+
+    <div class="card" id="card-export" style="display: none;">
+      <h2>Exportar Dados</h2>
+      <div class="export-group">
+        <h3>Análises Individuais (CSV)</h3>
+        <div class="export-btns">
+          <button class="exp-halo" onclick="exportarIndividual('halo','csv')">⬇ Halo</button>
+          <button class="exp-viab" onclick="exportarIndividual('viab','csv')">⬇ Viabilidade</button>
+          <button class="exp-morfo" onclick="exportarIndividual('morfo','csv')">⬇ Morfologia</button>
+        </div>
+      </div>
+      <div class="export-group">
+        <h3>Análises Individuais (TXT)</h3>
+        <div class="export-btns">
+          <button class="exp-halo" onclick="exportarIndividual('halo','txt')">⬇ Halo</button>
+          <button class="exp-viab" onclick="exportarIndividual('viab','txt')">⬇ Viabilidade</button>
+          <button class="exp-morfo" onclick="exportarIndividual('morfo','txt')">⬇ Morfologia</button>
+        </div>
+      </div>
+      <div class="export-group">
+        <h3>Combinado (Tudo junto)</h3>
+        <div class="export-btns">
+          <button class="exp-tudo" onclick="exportarTudo('csv')">⬇ Tudo .csv</button>
+          <button class="exp-tudo" onclick="exportarTudo('txt')">⬇ Tudo .txt</button>
+        </div>
+      </div>
+      <div class="export-group" style="border: none;">
+        <h3>Backup e Restauração</h3>
+        <div class="export-btns">
+          <button onclick="exportarBackup()">⬇ Backup .json</button>
+          <button onclick="document.getElementById('input-restore-hist').click()" style="color: var(--accent);">⬆ Restaurar .json</button>
+          <input type="file" id="input-restore-hist" accept=".json" style="display: none" onchange="restaurarBackup(event)">
+          <button onclick="document.getElementById('input-csv-import-hist').click()">⬆ Importar CSV/TXT</button>
+          <input type="file" id="input-csv-import-hist" accept=".csv,.txt" style="display: none" onchange="importarArquivo(event)">
+          <button onclick="limparTudo()" style="color: var(--red);">🗑 Limpar tudo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELA 4: RELATÓRIOS -->
+  <div id="tela-relatorios" class="hidden">
+    <div class="card">
+      <h2>Relatórios em PDF</h2>
+      <p class="nota">Gere um resumo geral, fichas individuais por animal ou a lista completa. Na janela de impressão, escolha “Salvar como PDF”.</p>
+      <div class="export-btns">
+        <button class="btn-pdf" onclick="gerarRelatorioFormatado('resumo')">📄 Resumo</button>
+        <button class="btn-pdf" onclick="gerarRelatorioFormatado('fichas')">📄 Fichas por animal</button>
+        <button class="btn-pdf" onclick="gerarRelatorioFormatado('lista')">📄 Lista completa</button>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <select id="pdf-animal"><option value="">Todos os animais</option></select>
+        <select id="pdf-tratamento"><option value="">Todos os tratamentos</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELA 5: ESTATÍSTICA -->
+  <div id="tela-estatistica" class="hidden">
+    <div class="card">
+      <h2>Estatística</h2>
+      <p class="nota">ANOVA com <b>animal como efeito fixo</b>, comparando tratamento, coleta e horário separadamente, além do modelo conjunto e da interação tratamento × horário. Cada lâmina conta como uma observação. As médias são acompanhadas de comparações par a par com correção de Bonferroni.</p>
+      <label for="est-analise">Análise</label>
+      <select id="est-analise" onchange="renderGrafico()">
+        <option value="halo">Halo (% fragmentação)</option>
+        <option value="viab">Viabilidade (% viáveis)</option>
+        <option value="morfo">Morfologia (% defeitos)</option>
+      </select>
+      <label for="est-transf">Transformação dos dados</label>
+      <select id="est-transf">
+        <option value="nenhuma">Nenhuma (usar o % direto)</option>
+        <option value="arcsen">Arco-seno da raiz do % (para porcentagens)</option>
+      </select>
+      <label for="est-alfa">Nível de significância</label>
+      <select id="est-alfa">
+        <option value="0.05">5% (p &lt; 0,05)</option>
+        <option value="0.01">1% (p &lt; 0,01)</option>
+        <option value="0.10">10% (p &lt; 0,10)</option>
+      </select>
+      <label>Restringir a (opcional)</label>
+      <div class="filters">
+        <select id="est-f-trat"></select>
+        <select id="est-f-hor"></select>
+        <select id="est-f-col"></select>
+      </div>
+      <button class="btn-primary" onclick="calcularEstatistica()" style="margin-top:16px;">📈 Calcular</button>
+      <button class="btn-secondary" onclick="gerarPDFEstatistica()">📄 PDF da estatística</button>
+    </div>
+    <div class="card">
+      <h2>Evolução no resfriamento</h2>
+      <p class="nota">O gráfico utiliza a análise selecionada acima. Cada linha representa um tratamento; os filtros de animal e coleta permanecem disponíveis.</p>
+      <div class="filters" style="margin-top:12px;">
+        <select id="graf-animal" onchange="renderGrafico()"></select>
+        <select id="graf-coleta" onchange="renderGrafico()"></select>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px"><input id="graf-ep" type="checkbox" onchange="renderGrafico()" style="width:auto"> Mostrar erro padrão</label>
+      <div id="grafico-evolucao" style="margin-top:12px;"></div>
+      <div id="grafico-tabela"></div>
+      <button class="btn-secondary" onclick="baixarGraficoPNG()">⬇ Baixar gráfico (PNG)</button>
+    </div>
+    <div id="est-resultado"></div>
+  </div>
+
+
+  <!-- TELA PROGRESSO -->
+  <div id="tela-progresso" class="hidden">
+    <div class="card">
+      <h2>Progresso das análises</h2>
+      <p class="nota">Cada célula representa uma combinação de horário, coleta e tratamento. ■ indica as três análises concluídas; ◩ indica registro parcial; □ indica pendência; — indica lâmina marcada como não analisável. Toque em uma célula para abrir ou continuar a lâmina.</p>
+      <label for="progresso-analise">Análise</label>
+      <select id="progresso-analise" onchange="renderProgresso()">
+        <option value="todas">Todas as análises</option>
+        <option value="halo">Halo</option>
+        <option value="viab">Viabilidade</option>
+        <option value="morfo">Morfologia</option>
+      </select>
+      <button class="btn-primary" onclick="proximaPendente()" style="margin-top:12px">➡ Próxima pendente</button>
+      <div id="progresso-grade"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Barra de Navegação Inferior -->
+<div class="bottom-nav">
+  <button class="nav-item active" id="nav-contagem" onclick="mostrarTela('contagem')">
+    <span class="nav-icon">🔬</span>
+    <span>Contagem</span>
+  </button>
+  <button class="nav-item" id="nav-historico" onclick="mostrarTela('historico')">
+    <span class="nav-icon">📊</span>
+    <span>Histórico</span>
+  </button>
+  <button class="nav-item" id="nav-estatistica" onclick="mostrarTela('estatistica')">
+    <span class="nav-icon">📈</span>
+    <span>Estatística</span>
+  </button>
+  <button class="nav-item" id="nav-progresso" onclick="mostrarTela('progresso')">
+    <span class="nav-icon">🧩</span><span>Progresso</span>
+  </button>
+  <button class="nav-item" id="nav-relatorios" onclick="mostrarTela('relatorios')">
+    <span class="nav-icon">📄</span><span>Relatórios</span>
+  </button>
+</div>
+
+<script>
+  const META_PADRAO = 200;
+  const METAS_DISPONIVEIS = [100, 200, 300, 400, 500];
+  let META = META_PADRAO;
+  const METODO = { halo: 'Halo', viab: 'Giemsa', morfo: 'Panótico Rápido' };
+  const DEFEITOS_MORFO = {
+    cabeca_redonda: { label: 'Cabeça redonda' }, cabeca_alongada: { label: 'Cabeça alongada' },
+    cabeca_piriforme: { label: 'Cabeça piriforme' }, cabeca_amorfa: { label: 'Cabeça amorfa' },
+    cabeca_dupla: { label: 'Cabeça dupla' }, defeito_acrossoma: { label: 'Defeito de acrossoma' },
+    peca_dobrada: { label: 'Peça interm. dobrada' }, peca_espessa: { label: 'Peça interm. espessa' },
+    gota_proximal: { label: 'Gota citoplasmática proximal' }, gota_distal: { label: 'Gota citoplasmática distal' },
+    insercao_abaxial: { label: 'Inserção abaxial' }, cauda_dobrada: { label: 'Cauda dobrada' },
+    cauda_enrolada: { label: 'Cauda enrolada' }, cauda_curta: { label: 'Cauda curta' },
+    cauda_dupla: { label: 'Cauda dupla' }, multiplos: { label: 'Múltiplos defeitos' }, outro: { label: 'Outro defeito' }
+  };
+  
+  // Fonte única das listas: os <select> são gerados a partir daqui (montarSelects)
+  const ANIMAIS = ['AL', 'AN', 'DU', 'DI', 'DA', 'DY'];
+  const HORARIOS = ['0h', '4h', '12h', '24h'];
+  const COLETAS = ['1', '2', '3', '4'];
+  const TRATAMENTOS = ['Controle', 'M1', 'M2', 'M3'];
+  
+  /* ================= UTILIDADES ================= */
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const num1 = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? 0 : Math.round(n * 10) / 10; };
+  const p1 = v => num1(v).toFixed(1).replace('.', ',');
+  const csvCampo = v => { const x=String(v ?? ''); return /[;\"\r\n]/.test(x) ? '"'+x.replace(/"/g,'""')+'"' : x; };
+  const chaveLamina = l => `${l.animal}|${l.horario}|${l.coleta}|${l.tratamento}`;
+  function fmtData(v) {
+    if (!v) return '';
+    if (/^\d{4}-\d{2}-\d{2}T/.test(v)) { const d = new Date(v); if (!isNaN(d)) return d.toLocaleDateString('pt-BR'); }
+    return v; // formato antigo (já em pt-BR) passa direto
+  }
+  function fmtTempo(seg) {
+    seg = Math.max(0, Math.round(seg));
+    return String(Math.floor(seg / 60)).padStart(2, '0') + ':' + String(seg % 60).padStart(2, '0');
+  }
+  function normalizarLamina(l) {
+    if (l.halo) l.halo.pctFragmentacao = num1(l.halo.pctFragmentacao);
+    if (l.viab) l.viab.pctViabilidade = num1(l.viab.pctViabilidade);
+    if (l.morfo) { l.morfo.pctNormal = num1(l.morfo.pctNormal); l.morfo.pctDefeitos = num1(l.morfo.pctDefeitos); }
+    return l;
+  }
+  function lerJSON(chave, padrao) {
+    try { const raw = localStorage.getItem(chave); return raw ? JSON.parse(raw) : padrao; } catch (e) { return padrao; }
+  }
+  let dadosCorrompidos = false;
+  function carregarLaminas() {
+    let raw = null;
+    try { raw = localStorage.getItem('ae_laminas'); } catch (e) {}
+    if (!raw) return [];
+    try {
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) throw new Error('formato inesperado');
+      return arr.map(normalizarLamina);
+    } catch (e) {
+      try { localStorage.setItem('ae_laminas_corrompido_' + Date.now(), raw); } catch (_) {}
+      dadosCorrompidos = true;
+      return [];
+    }
+  }
+
+  let laminas = carregarLaminas();
+  let pendenciasPerdidas = lerJSON('ae_laminas_nao_analisaveis', []);
+  let histLimite = 30;
+  let abrindoPendente = false;
+  let laminaAtual = null;
+  let contagem = { halo: [], viab: [], morfo: [] };
+  let abaAtiva = 'halo';
+  let tempo = { halo: 0, viab: 0, morfo: 0 }; // ms acumulados por análise
+  let tickInicio = null;                      // null = pausado
+
+  let somOn = localStorage.getItem('ae_som') !== 'off';
+  let vibOn = localStorage.getItem('ae_vib') !== 'off';
+  const suportaVibracao = 'vibrate' in navigator;
+  const suportaAudio = !!(window.AudioContext || window.webkitAudioContext);
+  let audioCtx = null;
+
+  function getAudioCtx() {
+    if (!suportaAudio) return null;
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function beep(freq, dur = 70, delay = 0, vol = 0.25) {
+    if (!somOn || !suportaAudio) return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const t0 = ctx.currentTime + delay / 1000;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(vol, t0 + 0.005);
+    gain.gain.setValueAtTime(vol, t0 + dur / 1000 - 0.01);
+    gain.gain.linearRampToValueAtTime(0, t0 + dur / 1000);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur / 1000 + 0.02);
+  }
+
+  function vibrar(p) {
+    if (!vibOn || !suportaVibracao) return;
+    try { navigator.vibrate(p); } catch (e) {}
+  }
+
+  function somClique(t) {
+    if (t === 'halo') beep(1200, 70);
+    else if (t === 'sem') beep(500, 70);
+    else if (t === 'viavel' || t === 'vivo_reagido' || t === 'vivo_integro') beep(1000, 70);
+    else if (t === 'inviavel' || t === 'morto_reagido' || t === 'morto_integro') beep(400, 70);
+    else if (t === 'normal') beep(1300, 70);
+    else if (t === 'morfo') beep(850, 60);
+    else if (t === 'salvar') { beep(660, 90, 0); beep(880, 90, 110); beep(1320, 150, 220); }
+    else if (t === 'erro') { beep(220, 90, 0); beep(220, 90, 130); }
+    else if (t === 'desfazer') beep(750, 60);
+    else if (t === 'zerar') { beep(300, 100, 0); beep(250, 100, 120); }
+  }
+
+  function vibClique(t) {
+    if (t === 'salvar') vibrar([60, 40, 60, 40, 120]);
+    else if (t === 'erro') vibrar([80, 50, 80]);
+    else if (t === 'desfazer') vibrar(25);
+    else if (t === 'zerar') vibrar([100, 50, 100]);
+    else if (t === 'normal') vibrar(20);
+    else vibrar(35);
+  }
+
+  function toggleSom() {
+    somOn = !somOn;
+    localStorage.setItem('ae_som', somOn ? 'on' : 'off');
+    atualizarToggles();
+    if (somOn) beep(1000, 70);
+  }
+
+  function toggleVibracao() {
+    vibOn = !vibOn;
+    localStorage.setItem('ae_vib', vibOn ? 'on' : 'off');
+    atualizarToggles();
+    if (vibOn) vibrar(40);
+  }
+
+  function atualizarToggles() {
+    const tSom = document.getElementById('tgl-som');
+    const tVib = document.getElementById('tgl-vib');
+    tSom.textContent = somOn ? '🔊 Som' : '🔇 Som';
+    tSom.className = 'toggle-btn ' + (somOn ? 'on' : '');
+    if (!suportaAudio) { tSom.disabled = true; tSom.textContent = '🔇 N/A'; }
+    tVib.textContent = vibOn ? '📳 Vibra' : '📴 Vibra';
+    tVib.className = 'toggle-btn ' + (vibOn ? 'on' : '');
+    if (!suportaVibracao) { tVib.disabled = true; tVib.textContent = '📴 N/A'; }
+  }
+
+  function mostrarTela(tela) {
+    if (tela !== 'contagem' && laminaAtual && tickInicio !== null) { acumularTempo(); tickInicio = null; salvarSessao(); atualizarPausaUI(); }
+    ['contagem', 'historico', 'estatistica', 'relatorios', 'progresso'].forEach(t => document.getElementById('nav-' + t)?.classList.remove('active'));
+    document.getElementById('tela-id').classList.add('hidden');
+    document.getElementById('tela-contagem').classList.add('hidden');
+    document.getElementById('tela-historico').classList.add('hidden');
+    document.getElementById('tela-relatorios').classList.add('hidden');
+    document.getElementById('tela-estatistica').classList.add('hidden');
+    document.getElementById('tela-progresso').classList.add('hidden');
+
+    if (tela === 'contagem') {
+      document.getElementById('nav-contagem').classList.add('active');
+      if(laminaAtual) document.getElementById('tela-contagem').classList.remove('hidden');
+      else document.getElementById('tela-id').classList.remove('hidden');
+    } else if (tela === 'historico') {
+      document.getElementById('tela-historico').classList.remove('hidden');
+      document.getElementById('nav-historico').classList.add('active');
+    } else if (tela === 'relatorios') {
+      document.getElementById('tela-relatorios').classList.remove('hidden');
+      document.getElementById('nav-relatorios').classList.add('active');
+    } else if (tela === 'progresso') {
+      document.getElementById('tela-progresso').classList.remove('hidden');
+      document.getElementById('nav-progresso').classList.add('active'); renderProgresso();
+    } else if (tela === 'estatistica') {
+      document.getElementById('tela-estatistica').classList.remove('hidden');
+      document.getElementById('nav-estatistica').classList.add('active');
+      renderGrafico();
+    }
+  }
+
+  /* ================= TOASTS E MODAIS ================= */
+  function toast(msg, tipo = 'info', ms = 3000, acao = null) {
+    let wrap = document.getElementById('toast-wrap');
+    if (!wrap) { wrap = document.createElement('div'); wrap.id = 'toast-wrap'; wrap.className = 'toast-wrap'; document.body.appendChild(wrap); }
+    const el = document.createElement('div');
+    el.className = 'toast ' + tipo;
+    const sp = document.createElement('span'); sp.textContent = msg; el.appendChild(sp);
+    let timer;
+    const fechar = () => { clearTimeout(timer); el.remove(); };
+    if (acao) { const b = document.createElement('button'); b.textContent = acao.label; b.onclick = () => { fechar(); acao.fn(); }; el.appendChild(b); }
+    wrap.appendChild(el);
+    while (wrap.children.length > 3) wrap.firstChild.remove();
+    timer = setTimeout(fechar, ms);
+    return fechar;
+  }
+
+  let _confirmResolve = null;
+  function confirmar(msg, { titulo = 'Confirmar', ok = 'Confirmar', perigo = false } = {}) {
+    return new Promise(resolve => {
+      _confirmResolve = resolve;
+      abrirModal(`<h3>${esc(titulo)}</h3><div class="aviso ${perigo ? 'aviso-erro' : 'aviso-info'}" style="white-space:pre-line;">${esc(msg)}</div><div class="acoes"><button class="btn-cancelar" onclick="responderConfirmar(false)">Cancelar</button><button class="btn-confirmar" style="${perigo ? 'background:var(--red);' : ''}" onclick="responderConfirmar(true)">${esc(ok)}</button></div>`);
+    });
+  }
+  function responderConfirmar(v) {
+    const r = _confirmResolve; _confirmResolve = null;
+    fecharModal();
+    if (r) r(v);
+  }
+  function avisar(msg, titulo = 'Aviso') {
+    abrirModal(`<h3>${esc(titulo)}</h3><div class="aviso aviso-info" style="white-space:pre-line;">${esc(msg)}</div><div class="acoes"><button class="btn-confirmar" onclick="fecharModal()">OK</button></div>`);
+  }
+
+  /* ================= PERSISTÊNCIA ================= */
+  function salvarLaminas() {
+    try { localStorage.setItem('ae_laminas', JSON.stringify(laminas)); return true; }
+    catch (e) { toast('❌ Não foi possível gravar no navegador (armazenamento cheio ou bloqueado). Faça um backup agora!', 'erro', 9000); return false; }
+  }
+
+  function acumularTempo() {
+    if (tickInicio !== null) { const n = Date.now(); tempo[abaAtiva] += n - tickInicio; tickInicio = n; }
+  }
+
+  function salvarSessao() {
+    try {
+      if (!laminaAtual) { localStorage.removeItem('ae_sessao'); return; }
+      acumularTempo();
+      localStorage.setItem('ae_sessao', JSON.stringify({ laminaAtual, contagem, abaAtiva, meta: META, tempo, pausado: tickInicio === null }));
+    } catch (e) {}
+  }
+
+  function restaurarSessao() {
+    const s = lerJSON('ae_sessao', null);
+    if (!s || !s.laminaAtual || !s.contagem) return false;
+    laminaAtual = s.laminaAtual;
+    contagem = { halo: s.contagem.halo || [], viab: s.contagem.viab || [], morfo: s.contagem.morfo || [] };
+    if (METAS_DISPONIVEIS.includes(s.meta)) META = s.meta;
+    tempo = Object.assign({ halo: 0, viab: 0, morfo: 0 }, s.tempo || {});
+    abaAtiva = ['halo', 'viab', 'morfo'].includes(s.abaAtiva) ? s.abaAtiva : 'halo';
+    tickInicio = s.pausado ? null : Date.now();
+    entrarTelaContagem(abaAtiva);
+    toast('↻ Contagem em andamento restaurada.', 'ok', 3500);
+    return true;
+  }
+
+  /* ================= BACKUP: AVISO ================= */
+  function atualizarBannerBackup() {
+    const el = document.getElementById('banner-backup');
+    if (!el) return;
+    const ts = Number(lerJSON('ae_ultimo_backup', 0)) || 0;
+    const dias = ts ? Math.floor((Date.now() - ts) / 86400000) : null;
+    if (laminas.length === 0 || (ts && dias < 7)) { el.classList.add('hidden'); return; }
+    el.innerHTML = (ts ? `<span>💾 Último backup há <b>${dias}</b> dia(s).</span>` : `<span>💾 Você ainda <b>não fez backup</b> das ${laminas.length} lâmina(s).</span>`)
+      + `<button onclick="exportarBackup()">Fazer backup</button>`;
+    el.classList.remove('hidden');
+  }
+
+  /* ================= SELECTS (gerados das constantes) ================= */
+  function montarSelects() {
+    const mk = (id, vals, placeholder, rotulo) => {
+      const sel = document.getElementById(id); if (!sel) return;
+      sel.innerHTML = (placeholder ? `<option value="">${esc(placeholder)}</option>` : '')
+        + vals.map(v => `<option value="${esc(v)}">${esc(rotulo ? rotulo(v) : v)}</option>`).join('');
+    };
+    mk('animal', ANIMAIS, '— Selecione —');
+    mk('horario', HORARIOS, null, v => v.replace(/h$/, ' h'));
+    mk('coleta', COLETAS, null);
+    mk('tratamento', TRATAMENTOS, null);
+    mk('meta', METAS_DISPONIVEIS, null);
+    mk('filtro-animal', ANIMAIS, 'Animal');
+    mk('filtro-horario', HORARIOS, 'Horário');
+    mk('filtro-coleta', COLETAS, 'Coleta');
+    mk('filtro-tratamento', TRATAMENTOS, 'Tratamento');
+    mk('graf-animal', ANIMAIS, 'Todos os animais');
+    mk('pdf-animal', ANIMAIS, 'Todos os animais');
+    mk('pdf-tratamento', TRATAMENTOS, 'Todos os tratamentos');
+    mk('graf-coleta', COLETAS, 'Todas as coletas', v => 'Coleta ' + v);
+    mk('est-f-trat', TRATAMENTOS, 'Todos tratamentos');
+    mk('est-f-hor', HORARIOS, 'Todos horários');
+    mk('est-f-col', COLETAS, 'Todas coletas', v => 'Coleta ' + v);
+  }
+
+  function atualizarMeta() {
+    document.querySelectorAll('.meta-txt').forEach(e => e.textContent = META);
+    const sel = document.getElementById('meta'); if (sel) sel.value = String(META);
+  }
+  function mudarMeta() {
+    const v = parseInt(document.getElementById('meta').value, 10);
+    META = METAS_DISPONIVEIS.includes(v) ? v : META_PADRAO;
+    try { localStorage.setItem('ae_meta', String(META)); } catch (e) {}
+    atualizarMeta();
+  }
+
+  /* ================= TIMER, PAUSA E TELA LIGADA ================= */
+  let timerUI = null;
+  function iniciarTimerUI() { pararTimerUI(); atualizarTimerUI(); timerUI = setInterval(atualizarTimerUI, 1000); }
+  function pararTimerUI() { if (timerUI) clearInterval(timerUI); timerUI = null; }
+  function atualizarTimerUI() {
+    const el = document.getElementById('timer-txt'); if (!el) return;
+    const ms = tempo[abaAtiva] + (tickInicio !== null ? Date.now() - tickInicio : 0);
+    el.textContent = '⏱ ' + fmtTempo(ms / 1000);
+  }
+  function atualizarPausaUI() {
+    const pausado = tickInicio === null;
+    const box = document.getElementById('timer-box'), btn = document.getElementById('btn-pausa');
+    if (box) box.classList.toggle('pausado', pausado);
+    if (btn) btn.textContent = pausado ? '▶ Retomar' : '⏸ Pausar';
+    atualizarTimerUI();
+  }
+  function alternarPausa() {
+    if (!laminaAtual) return;
+    if (tickInicio === null) tickInicio = Date.now(); else { acumularTempo(); tickInicio = null; }
+    salvarSessao(); atualizarPausaUI();
+  }
+  function retomarSePausado() { if (tickInicio === null) { tickInicio = Date.now(); atualizarPausaUI(); } }
+
+  let wakeLock = null;
+  async function ativarWakeLock() {
+    try {
+      if ('wakeLock' in navigator && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch (e) { wakeLock = null; }
+  }
+  function liberarWakeLock() { try { if (wakeLock) wakeLock.release(); } catch (e) {} wakeLock = null; }
+
+  /* ================= FLUXO DA LÂMINA ================= */
+  function entrarTelaContagem(aba) {
+    document.getElementById('tela-id').classList.add('hidden');
+    document.getElementById('tela-contagem').classList.remove('hidden');
+    ['historico', 'estatistica', 'relatorios'].forEach(n => document.getElementById('nav-' + n).classList.remove('active'));
+    document.getElementById('nav-contagem').classList.add('active');
+    document.getElementById('tela-historico').classList.add('hidden');
+    document.getElementById('tela-relatorios').classList.add('hidden');
+    document.getElementById('tela-estatistica').classList.add('hidden');
+    document.getElementById('tela-progresso').classList.add('hidden');
+    document.getElementById('info-lamina').innerHTML = `<b>${esc(laminaAtual.animal)}</b> · ${esc(laminaAtual.horario)} · Coleta ${esc(laminaAtual.coleta)} · ${esc(laminaAtual.tratamento)}` + (laminaAtual.obs ? ` · <i>${esc(laminaAtual.obs)}</i>` : '');
+    atualizarMeta();
+    trocarAba(aba);
+    atualizarTudo();
+    atualizarPausaUI();
+    iniciarTimerUI();
+    ativarWakeLock();
+  }
+
+  async function iniciarAnalise() {
+    const animal = document.getElementById('animal').value;
+    if (!animal) { somClique('erro'); vibClique('erro'); toast('⚠ Selecione o animal.', 'erro'); return; }
+
+    const horario = document.getElementById('horario').value;
+    const coleta = document.getElementById('coleta').value;
+    const tratamento = document.getElementById('tratamento').value;
+    const nova = { animal, horario, coleta, tratamento };
+    const existente = laminas.find(l => chaveLamina(l) === chaveLamina(nova));
+
+    if (existente && !abrindoPendente) {
+      const feitas = [];
+      if (existente.halo) feitas.push('• Halo (Fragmentação)');
+      if (existente.viab) feitas.push('• Viabilidade');
+      if (existente.morfo) feitas.push('• Morfologia');
+      if (feitas.length > 0) {
+        const ok = await confirmar(`O animal ${animal} (${horario}, Coleta ${coleta}, ${tratamento}) já possui:\n\n${feitas.join('\n')}\n\nSe você salvar qualquer uma dessas análises novamente, o dado antigo será SUBSTITUÍDO.`, { titulo: '⚠ Lâmina já registrada', ok: 'Continuar', perigo: true });
+        if (!ok) return;
+      }
+    }
+
+    laminaAtual = { animal, horario, coleta, tratamento, obs: document.getElementById('obs').value.trim() };
+    const registroAnterior = existente;
+    contagem = { halo: [], viab: [], morfo: [] };
+    tempo = { halo: 0, viab: 0, morfo: 0 };
+    abaAtiva = 'halo';
+    tickInicio = Date.now();
+    try { localStorage.setItem('ae_ultima', JSON.stringify(laminaAtual)); } catch (e) {}
+    document.querySelectorAll('.morfo-item').forEach(b => { const c = b.querySelector('.cnt'); if (c) c.textContent = '0'; });
+    entrarTelaContagem('halo');
+    if (abrindoPendente && registroAnterior) {
+      if(registroAnterior.halo) contagem.halo=[...Array(registroAnterior.halo.halo||0).fill('halo'),...Array(registroAnterior.halo.sem||0).fill('sem')];
+      if(registroAnterior.viab) {
+        const v=registroAnterior.viab;
+        if (TIPOS_VIAB.some(k => Number(v[k]) > 0)) {
+          TIPOS_VIAB.forEach(k => contagem.viab.push(...Array(Number(v[k])||0).fill(k)));
+          contagem.viab.push(...Array(Number(v.legadoViavel)||0).fill('viavel'), ...Array(Number(v.legadoInviavel)||0).fill('inviavel'));
+        } else {
+          contagem.viab=[...Array(v.viavel||0).fill('viavel'),...Array(v.inviavel||0).fill('inviavel')];
+        }
+      }
+      if(registroAnterior.morfo) { contagem.morfo=[...Array(registroAnterior.morfo.normal||0).fill('normal')]; Object.entries(registroAnterior.morfo.defeitos||{}).forEach(([k,v])=>contagem.morfo.push(...Array(Number(v)||0).fill(k))); }
+      atualizarTudo();
+    }
+    abrindoPendente=false;
+  }
+
+  function atualizarBotaoReabrir() {
+    const b = document.getElementById('btn-reabrir'); if (!b) return;
+    const u = lerJSON('ae_ultima', null);
+    if (!u || laminaAtual) { b.classList.add('hidden'); return; }
+    b.textContent = `↩ Reabrir última lâmina (${u.animal} · ${u.horario} · C${u.coleta} · ${u.tratamento})`;
+    b.classList.remove('hidden');
+  }
+  function reabrirUltima() {
+    const u = lerJSON('ae_ultima', null); if (!u) return;
+    document.getElementById('animal').value = u.animal;
+    document.getElementById('horario').value = u.horario;
+    document.getElementById('coleta').value = u.coleta;
+    document.getElementById('tratamento').value = u.tratamento;
+    document.getElementById('obs').value = u.obs || '';
+    iniciarAnalise();
+  }
+
+  function trocarAba(aba) {
+    acumularTempo();
+    abaAtiva = aba;
+    ['halo', 'viab', 'morfo'].forEach(a => {
+      document.getElementById('tab-' + a).classList.toggle('active', a === aba);
+      document.getElementById('pane-' + a).classList.toggle('hidden', a !== aba);
+    });
+    atualizarTimerUI();
+    salvarSessao();
+  }
+
+  let ultimoToque = 0;
+  function toqueRapidoDemais() {
+    const n = performance.now();
+    if (n - ultimoToque < 70) return true;
+    ultimoToque = n; return false;
+  }
+
+  function registrar(analise, tipo) {
+    if (!laminaAtual || toqueRapidoDemais()) return;
+    if (contagem[analise].length >= META) { somClique('erro'); vibClique('erro'); toast(`✅ Já atingiu ${META}. Salve a análise.`, 'aviso'); return; }
+    retomarSePausado();
+    contagem[analise].push(tipo);
+    somClique(tipo); vibClique(tipo);
+    atualizarTudo();
+  }
+
+  function registrarMorfo(tipo, btn) {
+    if (!laminaAtual || toqueRapidoDemais()) return;
+    if (contagem.morfo.length >= META) { somClique('erro'); vibClique('erro'); toast(`✅ Já atingiu ${META}. Salve a morfologia.`, 'aviso'); return; }
+    retomarSePausado();
+    contagem.morfo.push(tipo);
+    somClique(tipo === 'normal' ? 'normal' : 'morfo'); vibClique(tipo === 'normal' ? 'normal' : 'morfo');
+    atualizarTudo();
+  }
+
+  function desfazer(analise) {
+    if (contagem[analise].length === 0) { somClique('erro'); vibClique('erro'); return; }
+    contagem[analise].pop();
+    somClique('desfazer'); vibClique('desfazer');
+    atualizarTudo();
+  }
+
+  function zerarContagem(analise) {
+    if (contagem[analise].length === 0) { somClique('erro'); vibClique('erro'); return; }
+    const lam = laminaAtual, copia = contagem[analise].slice();
+    contagem[analise] = [];
+    somClique('zerar'); vibClique('zerar');
+    atualizarTudo();
+    toast(`🗑 ${copia.length} contagens de ${analise.toUpperCase()} apagadas.`, 'aviso', 7000, {
+      label: 'Desfazer',
+      fn: () => {
+        if (laminaAtual === lam && contagem[analise].length === 0) { contagem[analise] = copia; somClique('desfazer'); atualizarTudo(); }
+        else toast('Não foi possível desfazer (já há novas contagens).', 'erro');
+      }
+    });
+  }
+
+  function contar(analise, tipo) { return contagem[analise].filter(t => t === tipo).length; }
+  const TIPOS_VIAB = ['vivo_reagido','vivo_integro','morto_reagido','morto_integro'];
+  function contarViabilidadeDetalhada() {
+    return Object.fromEntries(TIPOS_VIAB.map(k => [k, contar('viab', k)]));
+  }
+  function contarViabilidadeLegada() {
+    return { viavel: contar('viab','viavel'), inviavel: contar('viab','inviavel') };
+  }
+
+  function contarPorDefeito() {
+    const r = {};
+    Object.keys(DEFEITOS_MORFO).forEach(k => r[k] = 0);
+    contagem.morfo.forEach(t => { if (r[t] !== undefined) r[t]++; });
+    return r;
+  }
+
+  const CONFIG_ANALISES = [
+    { id: 'halo', p: 'h', pctId: 'h-pct', icone: '🔬', nome: 'Halo', calc: () => {
+        const a = contar('halo', 'halo'), b = contar('halo', 'sem'), n = a + b;
+        return { n, valores: { 'h-halo': a, 'h-sem': b }, pct: n ? b / n * 100 : null }; } },
+    { id: 'viab', p: 'v', pctId: 'v-pct', icone: '💚', nome: 'Viabilidade', calc: () => {
+        const d = contarViabilidadeDetalhada(), leg = contarViabilidadeLegada();
+        const vivos = d.vivo_reagido + d.vivo_integro + leg.viavel;
+        const mortos = d.morto_reagido + d.morto_integro + leg.inviavel;
+        const n = vivos + mortos;
+        return { n, valores: { 'v-vivo-reagido': d.vivo_reagido, 'v-vivo-integro': d.vivo_integro, 'v-morto-reagido': d.morto_reagido, 'v-morto-integro': d.morto_integro }, pct: n ? vivos / n * 100 : null, legado: leg.viavel + leg.inviavel }; } },
+    { id: 'morfo', p: 'm', pctId: 'm-pctdef', icone: '🧬', nome: 'Morfologia', calc: () => {
+        const nor = contar('morfo', 'normal'), n = contagem.morfo.length;
+        return { n, valores: { 'm-normal': nor, 'm-defeitos': n - nor }, pct: n ? (n - nor) / n * 100 : null }; } }
+  ];
+
+  function atualizarTudo() {
+    CONFIG_ANALISES.forEach(c => {
+      const r = c.calc();
+      Object.entries(r.valores).forEach(([id, v]) => document.getElementById(id).textContent = v);
+      document.getElementById(c.p + '-total').textContent = r.n;
+      document.getElementById(c.pctId).textContent = r.pct === null ? '—' : r.pct.toFixed(0) + '%';
+      document.getElementById(c.p + '-circle').style.background = `conic-gradient(var(--accent) ${Math.min(r.n / META, 1) * 100}%, rgba(255,255,255,0.05) 0)`;
+      const btn = document.getElementById(c.p + '-btn-salvar');
+      btn.disabled = r.n !== META;
+      btn.textContent = r.n === META ? '💾 Salvar' : `💾 Salvar (${r.n}/${META})`;
+      document.getElementById('tab-' + c.id).textContent = (r.n === META ? '✓ ' : c.icone + ' ') + c.nome;
+      if (c.id === 'viab') document.getElementById('v-legado-aviso').classList.toggle('hidden', !r.legado);
+    });
+
+    const contDef = contarPorDefeito();
+    document.querySelectorAll('.morfo-item').forEach(btn => {
+      const cnt = btn.querySelector('.cnt'); if (!cnt) return;
+      cnt.textContent = btn.id === 'btn-normal-morfo' ? contar('morfo', 'normal') : (contDef[btn.dataset.tipo] || 0);
+    });
+    salvarSessao();
+  }
+
+  function salvarAnalise(analise) {
+    if (!laminaAtual || contagem[analise].length !== META) return;
+    acumularTempo();
+    const tempoSeg = Math.round(tempo[analise] / 1000);
+    let idx = laminas.findIndex(l => chaveLamina(l) === chaveLamina(laminaAtual));
+    const anterior = idx === -1 ? null : JSON.parse(JSON.stringify(laminas[idx]));
+    const eraNova = idx === -1;
+    if (eraNova) {
+      laminas.push({ animal: laminaAtual.animal, horario: laminaAtual.horario, coleta: laminaAtual.coleta, tratamento: laminaAtual.tratamento, obs: laminaAtual.obs, dataHora: new Date().toISOString(), halo: null, viab: null, morfo: null });
+      idx = laminas.length - 1;
+    }
+    if (analise === 'halo') {
+      const halo = contar('halo', 'halo'), sem = contar('halo', 'sem'), total = halo + sem;
+      laminas[idx].halo = { halo, sem, total, metodo: METODO.halo, pctFragmentacao: num1(sem / total * 100), tempoSeg };
+    } else if (analise === 'viab') {
+      const d = contarViabilidadeDetalhada(), leg = contarViabilidadeLegada();
+      const viavel = d.vivo_reagido + d.vivo_integro + leg.viavel;
+      const inviavel = d.morto_reagido + d.morto_integro + leg.inviavel;
+      const total = viavel + inviavel;
+      laminas[idx].viab = { ...d, legadoViavel: leg.viavel, legadoInviavel: leg.inviavel, viavel, inviavel, total, metodo: METODO.viab, pctViabilidade: num1(viavel / total * 100), tempoSeg };
+    } else {
+      const normal = contar('morfo', 'normal'), contDef = contarPorDefeito(), total = contagem.morfo.length, totalDef = total - normal;
+      laminas[idx].morfo = { normal, total, totalDefeitos: totalDef, defeitos: { ...contDef }, metodo: METODO.morfo, pctNormal: num1(normal / total * 100), pctDefeitos: num1(totalDef / total * 100), tempoSeg };
+    }
+    laminas[idx].dataHora = new Date().toISOString();
+    if (!salvarLaminas()) {
+      // falhou ao gravar: desfaz a alteração em memória e mantém a contagem na tela
+      if (eraNova) laminas.pop(); else laminas[idx] = anterior;
+      return;
+    }
+    somClique('salvar'); vibClique('salvar');
+    toast(`✅ ${CONFIG_ANALISES.find(c => c.id === analise).nome} salvo!`, 'ok');
+    contagem[analise] = [];
+    tempo[analise] = 0;
+    if (tickInicio !== null) tickInicio = Date.now();
+    atualizarTudo();
+    renderHistorico();
+    renderProgresso();
+    atualizarBannerBackup();
+  }
+
+  async function finalizarLamina() {
+    const pend = CONFIG_ANALISES.filter(c => contagem[c.id].length > 0).map(c => `• ${c.nome}: ${contagem[c.id].length}/${META}`);
+    if (pend.length) {
+      const ok = await confirmar(`Há contagens NÃO salvas que serão descartadas:\n\n${pend.join('\n')}`, { titulo: '⚠ Finalizar lâmina', ok: 'Descartar e finalizar', perigo: true });
+      if (!ok) return;
+    }
+    document.getElementById('tela-contagem').classList.add('hidden');
+    document.getElementById('tela-id').classList.remove('hidden');
+    document.getElementById('obs').value = '';
+    laminaAtual = null;
+    contagem = { halo: [], viab: [], morfo: [] };
+    tickInicio = null;
+    pararTimerUI(); liberarWakeLock();
+    salvarSessao();
+    atualizarBotaoReabrir();
+    mostrarTela('historico');
+  }
+
+  /* ================= HISTÓRICO ================= */
+  function renderHistorico() {
+    const div = document.getElementById('historico');
+    const cardExp = document.getElementById('card-export');
+    const statsDiv = document.getElementById('resumo-stats');
+    const totalLaminasSpan = document.getElementById('total-laminas');
+
+    const fAnimal = document.getElementById('filtro-animal').value;
+    const fHorario = document.getElementById('filtro-horario').value;
+    const fColeta = document.getElementById('filtro-coleta').value;
+    const fTratamento = document.getElementById('filtro-tratamento').value;
+
+    const laminasFiltradas = laminas.filter(l => {
+      if (fAnimal && l.animal !== fAnimal) return false;
+      if (fHorario && l.horario !== fHorario) return false;
+      if (fColeta && l.coleta !== fColeta) return false;
+      if (fTratamento && l.tratamento !== fTratamento) return false;
+      return true;
+    });
+    const busca=(document.getElementById('hist-busca')?.value||'').toLowerCase();
+    const status=document.getElementById('hist-status')?.value||'';
+    let lista=laminasFiltradas.filter(l=>(!busca||[l.animal,l.horario,l.coleta,l.tratamento,l.obs].join(' ').toLowerCase().includes(busca))&&(!status||(Number(!!l.halo)+Number(!!l.viab)+Number(!!l.morfo))<3));
+    const ordem=document.getElementById('hist-ordem')?.value||'recentes';
+    if(ordem==='animal')lista.sort((a,b)=>a.animal.localeCompare(b.animal));
+    else if(ordem==='horario')lista.sort((a,b)=>HORARIOS.indexOf(a.horario)-HORARIOS.indexOf(b.horario));
+    const totalVisivel=lista.length; lista=lista.slice(0,histLimite);
+
+    totalLaminasSpan.textContent = `${totalVisivel} lâmina(s) encontrada(s)`;
+
+    if (laminasFiltradas.length === 0 || totalVisivel === 0) {
+      div.innerHTML = '<p class="empty">Nenhuma lâmina encontrada com esses filtros.</p>';
+      statsDiv.style.display = laminasFiltradas.length ? 'grid' : 'none';
+      cardExp.style.display = laminas.length ? 'block' : 'none';
+      document.getElementById('hist-mais')?.classList.add('hidden');
+      return;
+    }
+
+    cardExp.style.display = 'block';
+    statsDiv.style.display = 'grid';
+
+    const media = (arr, f) => arr.length ? (arr.reduce((s, l) => s + f(l), 0) / arr.length).toFixed(1) + '%' : '—';
+    document.getElementById('stat-halo').textContent = media(laminasFiltradas.filter(l => l.halo), l => l.halo.pctFragmentacao);
+    document.getElementById('stat-viab').textContent = media(laminasFiltradas.filter(l => l.viab), l => l.viab.pctViabilidade);
+    document.getElementById('stat-morfo').textContent = media(laminasFiltradas.filter(l => l.morfo), l => l.morfo.pctDefeitos);
+
+    const badge = (obj, cls, valor, rotulo) => obj
+      ? `<div class="hist-badge ${cls}"><span class="val">${p1(valor)}%</span><span class="lbl">${rotulo}</span></div>`
+      : `<div class="hist-badge empty"><span class="val">—</span><span class="lbl">${rotulo}</span></div>`;
+
+    let html = '';
+    [...lista].reverse().forEach(l => {
+      const idx = laminas.indexOf(l);
+      const tp = [];
+      if (l.halo && l.halo.tempoSeg) tp.push('Halo ' + fmtTempo(l.halo.tempoSeg));
+      if (l.viab && l.viab.tempoSeg) tp.push('Viab. ' + fmtTempo(l.viab.tempoSeg));
+      if (l.morfo && l.morfo.tempoSeg) tp.push('Morfo ' + fmtTempo(l.morfo.tempoSeg));
+      html += `
+        <div class="hist-card">
+          <div class="hist-header">
+            <div>
+              <div class="hist-title">${esc(l.animal)}</div>
+              <div class="hist-sub">
+                <span>${esc(l.horario)}</span>
+                <span>Coleta ${esc(l.coleta)}</span>
+                <span>${esc(l.tratamento)}</span>
+              </div>
+            </div>
+            <div><button class="mini-btn" onclick="editarObservacao(${idx})">Editar obs.</button> <button class="hist-delete" onclick="removerLamina(${idx})">✕</button></div>
+          </div>
+          <div class="hist-badges">
+            ${badge(l.halo, 'halo', l.halo && l.halo.pctFragmentacao, 'Halo')}
+            ${badge(l.viab, 'viab', l.viab && l.viab.pctViabilidade, 'Viab.')}
+            ${badge(l.morfo, 'morfo', l.morfo && l.morfo.pctDefeitos, 'Morfo')}
+          </div>
+          ${tp.length ? `<div class="hist-tempo">⏱ ${tp.join(' · ')}</div>` : ''}
+        </div>
+      `;
+    });
+    const modo=document.getElementById('hist-modo')?.value||'cartoes';
+    if(modo==='tabela'){
+      html=`<div class="tab-scroll"><table class="hist-table"><thead><tr><th>Animal</th><th>Horário</th><th>Coleta</th><th>Tratamento</th><th>Halo</th><th>Viab.</th><th>Morfo</th><th>Ações</th></tr></thead><tbody>`+lista.map(l=>{const i=laminas.indexOf(l);return `<tr><td>${esc(l.animal)}</td><td>${esc(l.horario)}</td><td>${esc(l.coleta)}</td><td>${esc(l.tratamento)}</td><td>${l.halo?p1(l.halo.pctFragmentacao)+'%':'—'}</td><td>${l.viab?p1(l.viab.pctViabilidade)+'%':'—'}</td><td>${l.morfo?p1(l.morfo.pctDefeitos)+'%':'—'}</td><td><button onclick="editarObservacao(${i})">Editar</button> <button onclick="removerLamina(${i})">Excluir</button></td></tr>`}).join('')+'</tbody></table></div>';
+    }else{
+      const grupos={};lista.forEach(l=>(grupos[l.animal]??=[]).push(l));
+      html=Object.entries(grupos).map(([a,arr])=>`<details class="hist-group" open><summary>${a} — ${HORARIOS.flatMap(h=>COLETAS.flatMap(c=>TRATAMENTOS.map(t=>obterEstado(a,h,c,t)))).filter(x=>x==='done').length} de ${totalCombinacoes()} concluídas · ${arr.length} registro(s)</summary>${arr.map(l=>{const i=laminas.indexOf(l);return `<div class="hist-card"><div class="hist-header"><b>${l.horario} · C${l.coleta} · ${l.tratamento}</b><span><button class="mini-btn" onclick="editarObservacao(${i})">Editar obs.</button> <button class="hist-delete" onclick="removerLamina(${i})">✕</button></span></div><div class="hist-badges"><div class="hist-badge"><span class="val">${l.halo?p1(l.halo.pctFragmentacao)+'%':'—'}</span><span class="lbl">Halo</span></div><div class="hist-badge"><span class="val">${l.viab?p1(l.viab.pctViabilidade)+'%':'—'}</span><span class="lbl">Viab.</span></div><div class="hist-badge"><span class="val">${l.morfo?p1(l.morfo.pctDefeitos)+'%':'—'}</span><span class="lbl">Morfo</span></div></div></div>`}).join('')}</details>`).join('');
+    }
+    div.innerHTML = html || '<p class="empty">Nenhuma lâmina encontrada.</p>';
+    const mais=document.getElementById('hist-mais');if(mais){mais.classList.toggle('hidden',histLimite>=totalVisivel);mais.textContent=`Carregar mais 30 (${totalVisivel-histLimite} restantes)`;}
+  }
+
+  async function removerLamina(i) {
+    const l = laminas[i]; if (!l) return;
+    const ok = await confirmar(`Remover ${l.animal} · ${l.horario} · Coleta ${l.coleta} · ${l.tratamento} do histórico?`, { titulo: 'Remover lâmina', ok: 'Remover', perigo: true });
+    if (!ok) return;
+    laminas.splice(i, 1);
+    salvarLaminas();
+    renderHistorico();
+    renderProgresso();
+    atualizarBannerBackup();
+  }
+
+  async function limparTudo() {
+    const ok = await confirmar('Isso apaga TODO o histórico e não pode ser desfeito. Faça um backup .json antes, se ainda não fez.', { titulo: '⚠ Apagar tudo', ok: 'Apagar tudo', perigo: true });
+    if (!ok) return;
+    laminas = [];
+    salvarLaminas();
+    renderHistorico();
+    renderProgresso();
+    atualizarBannerBackup();
+  }
+
+  function laminasCom(analise) { return laminas.filter(l => l[analise] !== null); }
+
+  function exportarIndividual(analise, formato) {
+    const dados = laminasCom(analise);
+    if (dados.length === 0) { toast(`⚠ Nenhuma lâmina com ${analise} salva ainda.`, 'aviso'); return; }
+    const agora = new Date().toLocaleString('pt-BR');
+    let conteudo, mime, ext, nomeBase = analise;
+    const metodo = METODO[analise];
+
+    if (analise === 'halo') {
+      if (formato === 'txt') {
+        let linhas = ['='.repeat(70), 'ANÁLISE DE FRAGMENTAÇÃO DE DNA (HALO)', `Método: ${metodo}`, 'Exportado em: ' + agora, '='.repeat(70), ''];
+        dados.forEach((l, i) => {
+          linhas.push(`Lâmina ${i + 1}`, `  Método..............: ${l.halo.metodo || metodo}`, `  Animal..............: ${l.animal}`, `  Resfriamento........: ${l.horario}`, `  Coleta..............: ${l.coleta}`, `  Tratamento..........: ${l.tratamento}`);
+          if (l.obs) linhas.push(`  Observações.........: ${l.obs}`);
+          linhas.push(`  Com halo (íntegro)..: ${l.halo.halo} (${(100 - parseFloat(p1(l.halo.pctFragmentacao))).toFixed(1).replace('.', ',')}%)`, `  Sem halo (fragment.): ${l.halo.sem} (${p1(l.halo.pctFragmentacao)}%)`, `  Total...............: ${l.halo.total}`, `  % Fragmentação......: ${p1(l.halo.pctFragmentacao)}%`, `  Registrado em.......: ${fmtData(l.dataHora)}`, '-'.repeat(70));
+        });
+        const tH = dados.reduce((s, l) => s + l.halo.halo, 0);
+        const tS = dados.reduce((s, l) => s + l.halo.sem, 0);
+        linhas.push('', 'RESUMO GERAL', `  Lâminas.............: ${dados.length}`, `  Total com halo......: ${tH}`, `  Total sem halo......: ${tS}`, `  % Fragmentação geral: ${(tS / (tH + tS) * 100).toFixed(1).replace('.', ',')}%`);
+        conteudo = linhas.join('\n'); mime = 'text/plain;charset=utf-8'; ext = 'txt';
+      } else {
+        let linhas = ['Metodo;Animal;Resfriamento;Coleta;Tratamento;Observacoes;Com_Halo_Integro;Sem_Halo_Fragmentado;Total;%_Fragmentacao;Data'];
+        dados.forEach(l => linhas.push(`${l.halo.metodo || metodo};${l.animal};${l.horario};${l.coleta};${l.tratamento};${csvCampo(l.obs || '')};${l.halo.halo};${l.halo.sem};${l.halo.total};${p1(l.halo.pctFragmentacao)};${fmtData(l.dataHora)}`));
+        conteudo = '\uFEFF' + linhas.join('\n'); mime = 'text/csv;charset=utf-8'; ext = 'csv';
+      }
+    } else if (analise === 'viab') {
+      if (formato === 'txt') {
+        let linhas = ['='.repeat(70), 'ANÁLISE DE VIABILIDADE ESPERMÁTICA', `Método: ${metodo}`, 'Exportado em: ' + agora, '='.repeat(70), ''];
+        dados.forEach((l, i) => {
+          linhas.push(`Lâmina ${i + 1}`, `  Método..............: ${l.viab.metodo || metodo}`, `  Animal..............: ${l.animal}`, `  Resfriamento........: ${l.horario}`, `  Coleta..............: ${l.coleta}`, `  Tratamento..........: ${l.tratamento}`);
+          if (l.obs) linhas.push(`  Observações.........: ${l.obs}`);
+          linhas.push(`  Vivo reagido........: ${l.viab.vivo_reagido??'Não classificado'}`, `  Vivo íntegro........: ${l.viab.vivo_integro??'Não classificado'}`, `  Morto reagido.......: ${l.viab.morto_reagido??'Não classificado'}`, `  Morto íntegro.......: ${l.viab.morto_integro??'Não classificado'}`, `  Viável (total)......: ${l.viab.viavel} (${p1(l.viab.pctViabilidade)}%)`, `  Não viável (total)..: ${l.viab.inviavel}`, `  Total...............: ${l.viab.total}`, `  % Viabilidade.......: ${p1(l.viab.pctViabilidade)}%`, `  Registrado em.......: ${fmtData(l.dataHora)}`, '-'.repeat(70));
+        });
+        const tV = dados.reduce((s, l) => s + l.viab.viavel, 0);
+        const tI = dados.reduce((s, l) => s + l.viab.inviavel, 0);
+        linhas.push('', 'RESUMO GERAL', `  Lâminas.............: ${dados.length}`, `  Total viáveis.......: ${tV}`, `  Total não viáveis...: ${tI}`, `  % Viabilidade geral.: ${(tV / (tV + tI) * 100).toFixed(1).replace('.', ',')}%`);
+        conteudo = linhas.join('\n'); mime = 'text/plain;charset=utf-8'; ext = 'txt';
+      } else {
+        let linhas = ['Metodo;Animal;Resfriamento;Coleta;Tratamento;Observacoes;Vivo_Reagido;Vivo_Integro;Morto_Reagido;Morto_Integro;Legado_Viavel;Legado_Nao_Viavel;Viavel_Total;Nao_Viavel_Total;Total;%_Viabilidade;Data'];
+        dados.forEach(l => linhas.push(`${l.viab.metodo || metodo};${l.animal};${l.horario};${l.coleta};${l.tratamento};${csvCampo(l.obs || '')};${l.viab.vivo_reagido??''};${l.viab.vivo_integro??''};${l.viab.morto_reagido??''};${l.viab.morto_integro??''};${l.viab.legadoViavel??''};${l.viab.legadoInviavel??''};${l.viab.viavel};${l.viab.inviavel};${l.viab.total};${p1(l.viab.pctViabilidade)};${fmtData(l.dataHora)}`));
+        conteudo = '\uFEFF' + linhas.join('\n'); mime = 'text/csv;charset=utf-8'; ext = 'csv';
+      }
+    } else {
+      if (formato === 'txt') {
+        let linhas = ['='.repeat(70), 'ANÁLISE DE MORFOLOGIA ESPERMÁTICA', `Método: ${metodo}`, 'Exportado em: ' + agora, '='.repeat(70), ''];
+        dados.forEach((l, i) => {
+          linhas.push(`Lâmina ${i + 1}`, `  Método..............: ${l.morfo.metodo || metodo}`, `  Animal..............: ${l.animal}`, `  Resfriamento........: ${l.horario}`, `  Coleta..............: ${l.coleta}`, `  Tratamento..........: ${l.tratamento}`);
+          if (l.obs) linhas.push(`  Observações.........: ${l.obs}`);
+          linhas.push(`  Normais.............: ${l.morfo.normal} (${p1(l.morfo.pctNormal)}%)`, `  Total defeituosos...: ${l.morfo.totalDefeitos} (${p1(l.morfo.pctDefeitos)}%)`, `  Detalhamento dos defeitos:`);
+          Object.keys(DEFEITOS_MORFO).forEach(k => { const qtd = (l.morfo.defeitos && l.morfo.defeitos[k]) || 0; if (qtd > 0) linhas.push(`    ${DEFEITOS_MORFO[k].label.padEnd(32, '.')}: ${qtd}`); });
+          linhas.push(`  Registrado em.......: ${fmtData(l.dataHora)}`, '-'.repeat(70));
+        });
+        linhas.push('', 'RESUMO GERAL');
+        const totDef = dados.reduce((s, l) => s + l.morfo.totalDefeitos, 0);
+        const totNorm = dados.reduce((s, l) => s + l.morfo.normal, 0);
+        linhas.push(`  Lâminas.............: ${dados.length}`, `  Total normais.......: ${totNorm} (${(totNorm / (totNorm + totDef) * 100).toFixed(1).replace('.', ',')}%)`, `  Total defeituosos...: ${totDef} (${(totDef / (totNorm + totDef) * 100).toFixed(1).replace('.', ',')}%)`);
+        conteudo = linhas.join('\n'); mime = 'text/plain;charset=utf-8'; ext = 'txt';
+      } else {
+        const chavesDef = Object.keys(DEFEITOS_MORFO);
+        let header = ['Metodo', 'Animal', 'Resfriamento', 'Coleta', 'Tratamento', 'Observacoes', 'Normal', 'Total_Defeitos', '%_Normal', '%_Defeitos'].concat(chavesDef.map(k => DEFEITOS_MORFO[k].label.replace(/[ ;]/g, '_'))).concat(['Data']);
+        let linhas = [header.join(';')];
+        dados.forEach(l => {
+          const base = [l.morfo.metodo || metodo, l.animal, l.horario, l.coleta, l.tratamento, l.obs || '', l.morfo.normal, l.morfo.totalDefeitos, p1(l.morfo.pctNormal), p1(l.morfo.pctDefeitos)];
+          const defs = chavesDef.map(k => (l.morfo.defeitos && l.morfo.defeitos[k]) || 0);
+          linhas.push(base.concat(defs).concat([fmtData(l.dataHora)]).join(';'));
+        });
+        conteudo = '\uFEFF' + linhas.join('\n'); mime = 'text/csv;charset=utf-8'; ext = 'csv';
+      }
+    }
+    baixar(conteudo, mime, `${nomeBase}_${stamp()}.${ext}`);
+  }
+
+  function exportarTudo(formato) {
+    if (laminas.length === 0) { toast('⚠ Nenhuma lâmina salva.', 'aviso'); return; }
+    const agora = new Date().toLocaleString('pt-BR');
+    let conteudo, mime, ext;
+    if (formato === 'txt') {
+      let linhas = ['='.repeat(80), 'ANÁLISE ESPERMÁTICA COMPLETA', 'Halo: método halo | Viabilidade: Giemsa | Morfologia: Panótico Rápido', 'Exportado em: ' + agora, '='.repeat(80), ''];
+      laminas.forEach((l, i) => {
+        linhas.push(`Lâmina ${i + 1} — ${l.animal} · ${l.horario} · Coleta ${l.coleta} · ${l.tratamento}`);
+        if (l.obs) linhas.push(`  Observações: ${l.obs}`);
+        linhas.push('');
+        if (l.halo) {
+          linhas.push(`  [HALO — ${l.halo.metodo || 'Halo'}]`, `    Com halo (íntegro)..: ${l.halo.halo}`, `    Sem halo (fragment.): ${l.halo.sem}`, `    % Fragmentação......: ${p1(l.halo.pctFragmentacao)}%`);
+        } else {
+          linhas.push(`  [HALO] não realizada`);
+        }
+        linhas.push('');
+        if (l.viab) {
+          linhas.push(`  [VIABILIDADE — ${l.viab.metodo || 'Giemsa'}]`, `    Vivo reagido........: ${l.viab.vivo_reagido??'Não classificado'}`, `    Vivo íntegro........: ${l.viab.vivo_integro??'Não classificado'}`, `    Morto reagido.......: ${l.viab.morto_reagido??'Não classificado'}`, `    Morto íntegro.......: ${l.viab.morto_integro??'Não classificado'}`, `    Viável (total)......: ${l.viab.viavel}`, `    Não viável (total)..: ${l.viab.inviavel}`, ...(l.viab.legadoViavel||l.viab.legadoInviavel?[`    Classificação antiga: ${l.viab.legadoViavel||0} viáveis / ${l.viab.legadoInviavel||0} não viáveis`]:[]), `    % Viabilidade.......: ${p1(l.viab.pctViabilidade)}%`);
+        } else {
+          linhas.push(`  [VIABILIDADE] não realizada`);
+        }
+        linhas.push('');
+        if (l.morfo) {
+          linhas.push(`  [MORFOLOGIA — ${l.morfo.metodo || 'Panótico Rápido'}]`, `    Normais.............: ${l.morfo.normal} (${p1(l.morfo.pctNormal)}%)`, `    Total defeituosos...: ${l.morfo.totalDefeitos} (${p1(l.morfo.pctDefeitos)}%)`);
+          Object.keys(DEFEITOS_MORFO).forEach(k => { const qtd = (l.morfo.defeitos && l.morfo.defeitos[k]) || 0; if (qtd > 0) linhas.push(`      ${DEFEITOS_MORFO[k].label}: ${qtd}`); });
+        } else {
+          linhas.push(`  [MORFOLOGIA] não realizada`);
+        }
+        linhas.push('', `  Registrado em: ${fmtData(l.dataHora)}`, '='.repeat(80), '');
+      });
+      conteudo = linhas.join('\n'); mime = 'text/plain;charset=utf-8'; ext = 'txt';
+    } else {
+      const chavesDef = Object.keys(DEFEITOS_MORFO);
+      let header = ['Animal', 'Resfriamento', 'Coleta', 'Tratamento', 'Observacoes', 'Halo_Metodo', 'Halo_Integro', 'Halo_Fragmentado', '%_Fragmentacao', 'Viab_Metodo', 'Vivo_Reagido', 'Vivo_Integro', 'Morto_Reagido', 'Morto_Integro', 'Legado_Viavel', 'Legado_Nao_Viavel', 'Viavel_Total', 'Nao_Viavel_Total', '%_Viabilidade', 'Morfo_Metodo', 'Normal', 'Total_Defeitos', '%_Normal', '%_Defeitos'].concat(chavesDef.map(k => DEFEITOS_MORFO[k].label.replace(/[ ;]/g, '_'))).concat(['Data']);
+      let linhas = [header.join(';')];
+      laminas.forEach(l => {
+        const h = l.halo ? [l.halo.metodo || 'Halo', l.halo.halo, l.halo.sem, p1(l.halo.pctFragmentacao)] : ['', '', '', ''];
+        const v = l.viab ? [l.viab.metodo || 'Giemsa', l.viab.vivo_reagido??'', l.viab.vivo_integro??'', l.viab.morto_reagido??'', l.viab.morto_integro??'', l.viab.legadoViavel??'', l.viab.legadoInviavel??'', l.viab.viavel, l.viab.inviavel, p1(l.viab.pctViabilidade)] : ['', '', '', '', '', '', '', '', '', ''];
+        const mBase = l.morfo ? [l.morfo.metodo || 'Panótico Rápido', l.morfo.normal, l.morfo.totalDefeitos, p1(l.morfo.pctNormal), p1(l.morfo.pctDefeitos)] : ['', '', '', '', ''];
+        const defs = chavesDef.map(k => l.morfo && l.morfo.defeitos ? (l.morfo.defeitos[k] || 0) : '');
+        linhas.push([l.animal, l.horario, l.coleta, l.tratamento, csvCampo(l.obs || '')].concat(h).concat(v).concat(mBase).concat(defs).concat([fmtData(l.dataHora)]).join(';'));
+      });
+      conteudo = '\uFEFF' + linhas.join('\n'); mime = 'text/csv;charset=utf-8'; ext = 'csv';
+    }
+    baixar(conteudo, mime, `analise_completa_${stamp()}.${ext}`);
+  }
+
+  function exportarBackup() {
+    const conteudo = JSON.stringify({ versao: 1, exportado: new Date().toISOString(), laminas }, null, 2);
+    baixar(conteudo, 'application/json', `backup_analise_${stamp()}.json`);
+    try { localStorage.setItem('ae_ultimo_backup', String(Date.now())); } catch (e) {}
+    atualizarBannerBackup();
+    toast('⬇ Backup gerado.', 'ok');
+  }
+
+  function restaurarBackup(ev) {
+    const file = ev.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data.laminas || !Array.isArray(data.laminas)) throw new Error('Formato inválido');
+        const ok = await confirmar(`Restaurar ${data.laminas.length} lâminas do backup?\nIsso SUBSTITUI o histórico atual.`, { titulo: 'Restaurar backup', ok: 'Restaurar', perigo: true });
+        if (!ok) return;
+        laminas = data.laminas.map(normalizarLamina);
+        salvarLaminas();
+        renderHistorico();
+        atualizarBannerBackup();
+        toast('✅ Backup restaurado!', 'ok');
+      } catch (err) { toast('❌ Arquivo de backup inválido.', 'erro'); }
+    };
+    reader.readAsText(file);
+    ev.target.value = '';
+  }
+
+  function baixar(conteudo, mime, nomeArquivo) {
+    const blob = new Blob([conteudo], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nomeArquivo;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function stamp() { return new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-'); }
+
+  let importPendente = null;
+
+  function importarArquivo(ev) {
+    const file = ev.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const texto = e.target.result;
+        const nomeMin = file.name.toLowerCase();
+        const isTxt = nomeMin.endsWith('.txt') || (!texto.includes(';') && texto.includes('====='));
+        let laminasImportadas = isTxt ? parseTxtAntigo(texto) : parseCsvAntigo(texto);
+        if (!laminasImportadas || laminasImportadas.length === 0) {
+          abrirModalErro('❌ Não foi possível reconhecer nenhuma lâmina no arquivo.\n\nVerifique se o arquivo é um CSV/TXT exportado por uma das versões anteriores.');
+          return;
+        }
+        mostrarPreviewImportacao(laminasImportadas, file.name);
+      } catch (err) { abrirModalErro('❌ Erro ao ler o arquivo: ' + err.message); }
+    };
+    reader.readAsText(file, 'utf-8');
+    ev.target.value = '';
+  }
+
+  function normalizarTxt(s) { return String(s || '').toLowerCase().replace(/[ _%]/g, '').replace(/[çãáéíóúâêôà]/g, c => ({ 'ç': 'c', 'ã': 'a', 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'â': 'a', 'ê': 'e', 'ô': 'o', 'à': 'a' }[c] || c)); }
+
+  function parseCsvAntigo(texto) {
+    texto = texto.replace(/^\uFEFF/, '');
+    const primeiraLinha = texto.split(/\r?\n/)[0] || '';
+    const sep = primeiraLinha.includes(';') ? ';' : ',';
+    const linhas = parseCsvLinhas(texto, sep);
+    if (linhas.length < 2) return [];
+    const header = linhas[0].map(h => h.trim());
+    const headerNorm = header.map(normalizarTxt);
+    const colIndex = (nomes) => { for (const n of nomes) { const alvo = normalizarTxt(n); const idx = headerNorm.findIndex(h => h === alvo); if (idx !== -1) return idx; } return -1; };
+    const cols = {
+      animal: colIndex(['Animal']), horario: colIndex(['Resfriamento', 'Horario', 'Tempo']), coleta: colIndex(['Coleta']), tratamento: colIndex(['Tratamento', 'Trat']), obs: colIndex(['Observacoes', 'Obs']), data: colIndex(['Data', 'Data_Registro', 'Registrado em']),
+      haloMetodo: colIndex(['Halo_Metodo', 'Metodo']), haloIntegro: colIndex(['Com_Halo_Integro', 'Halo_Integro']), haloFrag: colIndex(['Sem_Halo_Fragmentado', 'Halo_Fragmentado']), haloPct: colIndex(['%_Fragmentacao', 'Fragmentacao']),
+      viabMetodo: colIndex(['Viab_Metodo']), viavel: colIndex(['Viavel']), inviavel: colIndex(['Nao_Viavel', 'Nao Viavel']), viabPct: colIndex(['%_Viabilidade', 'Viabilidade']),
+      morfoMetodo: colIndex(['Morfo_Metodo']), morfoNormal: colIndex(['Normal']), morfoTotalDef: colIndex(['Total_Defeitos']), morfoPctNorm: colIndex(['%_Normal']), morfoPctDef: colIndex(['%_Defeitos']),
+      oldNormal: colIndex(['Normal_Old']), oldMenor: colIndex(['Def_Menor']), oldMaior: colIndex(['Def_Maior'])
+    };
+    const chavesDef = Object.keys(DEFEITOS_MORFO);
+    const colsDef = {};
+    chavesDef.forEach(k => { const label = DEFEITOS_MORFO[k].label; const alvo = normalizarTxt(label); let idx = -1; for (let i = 0; i < headerNorm.length; i++) { if (headerNorm[i] === alvo) { idx = i; break; } } colsDef[k] = idx; });
+    const resultado = [];
+    for (let i = 1; i < linhas.length; i++) {
+      const row = linhas[i];
+      if (!row || row.length === 0) continue;
+      const getVal = (idx) => idx >= 0 && row[idx] !== undefined ? String(row[idx]).trim() : '';
+      const getNum = (idx) => { const v = getVal(idx).replace(',', '.'); const n = parseFloat(v); return isNaN(n) ? null : n; };
+      const animal = getVal(cols.animal).toUpperCase();
+      if (!animal) continue;
+      const lamina = { animal, horario: getVal(cols.horario) || '0h', coleta: getVal(cols.coleta) || '1', tratamento: getVal(cols.tratamento) || 'Controle', obs: getVal(cols.obs), dataHora: getVal(cols.data) || new Date().toISOString(), halo: null, viab: null, morfo: null };
+      if (cols.haloIntegro >= 0 || cols.haloFrag >= 0) {
+        const integro = getNum(cols.haloIntegro) ?? 0;
+        const frag = getNum(cols.haloFrag) ?? 0;
+        const total = integro + frag;
+        if (total > 0) lamina.halo = { halo: integro, sem: frag, total, metodo: getVal(cols.haloMetodo) || 'Halo', pctFragmentacao: cols.haloPct >= 0 && getVal(cols.haloPct) !== '' ? getVal(cols.haloPct).replace(',', '.') : (frag / total * 100).toFixed(1) };
+      }
+      if (cols.viavel >= 0 || cols.inviavel >= 0) {
+        const viavel = getNum(cols.viavel) ?? 0;
+        const inviavel = getNum(cols.inviavel) ?? 0;
+        const total = viavel + inviavel;
+        if (total > 0) lamina.viab = { viavel, inviavel, total, metodo: getVal(cols.viabMetodo) || 'Giemsa', pctViabilidade: cols.viabPct >= 0 && getVal(cols.viabPct) !== '' ? getVal(cols.viabPct).replace(',', '.') : (viavel / total * 100).toFixed(1) };
+      }
+      const temDefNovo = Object.values(colsDef).some(idx => idx >= 0);
+      const temNormal = cols.morfoNormal >= 0;
+      if (temDefNovo || temNormal || cols.morfoTotalDef >= 0) {
+        const normal = getNum(cols.morfoNormal) ?? 0;
+        const defeitos = {};
+        chavesDef.forEach(k => defeitos[k] = getNum(colsDef[k]) ?? 0);
+        const totalDef = Object.values(defeitos).reduce((a, b) => a + b, 0);
+        const total = normal + totalDef;
+        if (total > 0) lamina.morfo = { normal, total, totalDefeitos: totalDef, defeitos, metodo: getVal(cols.morfoMetodo) || 'Panótico Rápido', pctNormal: cols.morfoPctNorm >= 0 && getVal(cols.morfoPctNorm) !== '' ? getVal(cols.morfoPctNorm).replace(',', '.') : (normal / total * 100).toFixed(1), pctDefeitos: cols.morfoPctDef >= 0 && getVal(cols.morfoPctDef) !== '' ? getVal(cols.morfoPctDef).replace(',', '.') : (totalDef / total * 100).toFixed(1) };
+      }
+      if (lamina.halo || lamina.viab || lamina.morfo) resultado.push(lamina);
+    }
+    return resultado;
+  }
+
+  function parseCsvLinhas(texto, sep) {
+    const linhas = []; let campo = '', linha = [], entreAspas = false;
+    for (let i = 0; i < texto.length; i++) {
+      const c = texto[i];
+      if (entreAspas) {
+        if (c === '"') { if (texto[i + 1] === '"') { campo += '"'; i++; } else entreAspas = false; } else campo += c;
+      } else {
+        if (c === '"') entreAspas = true;
+        else if (c === sep) { linha.push(campo); campo = ''; }
+        else if (c === '\n') { linha.push(campo); linhas.push(linha); linha = []; campo = ''; }
+        else if (c === '\r') { }
+        else campo += c;
+      }
+    }
+    if (campo !== '' || linha.length > 0) { linha.push(campo); linhas.push(linha); }
+    return linhas;
+  }
+
+  function parseTxtAntigo(texto) {
+    const resultado = []; const blocos = texto.split(/={50,}/);
+    blocos.forEach(bloco => {
+      if (!/L[âa]mina/i.test(bloco) && !/Animal/i.test(bloco)) return;
+      const get = (labels) => { for (const label of labels) { const esc = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const m = bloco.match(new RegExp(esc + '\\.*\\s*:\\s*(.+)', 'i')); if (m) return m[1].trim(); } return ''; };
+      const getNum = (labels) => { const v = get(labels).replace(',', '.'); const n = parseFloat(v); return isNaN(n) ? null : n; };
+      const animal = get(['Animal']).toUpperCase();
+      if (!animal) return;
+      const lamina = { animal, horario: get(['Resfriamento']) || '0h', coleta: get(['Coleta']) || '1', tratamento: get(['Tratamento']) || 'Controle', obs: get(['Observações', 'Observacoes']) || '', dataHora: get(['Registrado em', 'Data']) || new Date().toISOString(), halo: null, viab: null, morfo: null };
+      const hIntegro = getNum(['Com halo \\(íntegro\\)', 'Com halo', 'Integro']);
+      const hFrag = getNum(['Sem halo \\(fragmentado\\)', 'Sem halo', 'Fragmentado']);
+      if (hIntegro !== null && hFrag !== null) { const total = hIntegro + hFrag; lamina.halo = { halo: hIntegro, sem: hFrag, total, metodo: get(['Método', 'Metodo']) || 'Halo', pctFragmentacao: getNum(['% Fragmentação', '% Fragmentacao']) ?? (hFrag / total * 100).toFixed(1) }; }
+      const viavel = getNum(['Viável', 'Viavel']);
+      const inviavel = getNum(['Não viável', 'Nao viavel']);
+      if (viavel !== null && inviavel !== null) { const total = viavel + inviavel; lamina.viab = { viavel, inviavel, total, metodo: 'Giemsa', pctViabilidade: getNum(['% Viabilidade']) ?? (viavel / total * 100).toFixed(1) }; }
+      const normal = getNum(['Normais']);
+      const totalDef = getNum(['Total defeituosos']);
+      if (normal !== null || totalDef !== null) {
+        const defeitos = {};
+        Object.keys(DEFEITOS_MORFO).forEach(k => { const label = DEFEITOS_MORFO[k].label; const q = getNum([label]); defeitos[k] = q !== null ? q : 0; });
+        const somaDef = Object.values(defeitos).reduce((a, b) => a + b, 0);
+        const totDefFinal = totalDef !== null ? totalDef : somaDef;
+        const totFinal = (normal || 0) + totDefFinal;
+        if (totFinal > 0) lamina.morfo = { normal: normal || 0, total: totFinal, totalDefeitos: totDefFinal, defeitos, metodo: 'Panótico Rápido', pctNormal: normal !== null ? (normal / totFinal * 100).toFixed(1) : '0', pctDefeitos: (totDefFinal / totFinal * 100).toFixed(1) };
+      }
+      if (lamina.halo || lamina.viab || lamina.morfo) resultado.push(lamina);
+    });
+    return resultado;
+  }
+
+  function mostrarPreviewImportacao(importadas, nomeArquivo) {
+    importadas.forEach(normalizarLamina);
+    let novasLaminas = 0, linasCompletadas = 0, linasSubstituidas = 0;
+    const detalhes = [];
+    importadas.forEach(imp => {
+      const chave = chaveLamina(imp);
+      const existente = laminas.find(l => chaveLamina(l) === chave);
+      if (!existente) { novasLaminas++; detalhes.push({ tipo: 'nova', lamina: imp }); }
+      else {
+        const conflitos = ['halo', 'viab', 'morfo'].filter(k => imp[k] && existente[k]);
+        if (conflitos.length > 0) { linasSubstituidas++; detalhes.push({ tipo: 'substituir', lamina: imp, conflitos }); }
+        else { linasCompletadas++; detalhes.push({ tipo: 'completar', lamina: imp }); }
+      }
+    });
+    importPendente = { importadas, detalhes, nomeArquivo };
+    let html = `<h3>📥 Preview da importação</h3><div class="aviso aviso-info"><b>Arquivo:</b> ${esc(nomeArquivo)}<br><b>Lâminas reconhecidas:</b> ${importadas.length}</div>`;
+    if (novasLaminas > 0) html += `<div class="resumo-item">🆕 <b>${novasLaminas}</b> lâmina(s) nova(s) — serão adicionadas</div>`;
+    if (linasCompletadas > 0) html += `<div class="resumo-item">➕ <b>${linasCompletadas}</b> lâmina(s) — vão completar parâmetros que faltavam</div>`;
+    if (linasSubstituidas > 0) html += `<div class="resumo-item conflito">⚠️ <b>${linasSubstituidas}</b> lâmina(s) com <b>conflito</b> — já existem com parâmetro(s) salvo(s)</div>`;
+    html += `<table style="margin-top:12px;"><thead><tr><th>Animal</th><th>Resf.</th><th>Coleta</th><th>Trat.</th><th>Halo</th><th>Viab.</th><th>Morfo</th><th>Situação</th></tr></thead><tbody>`;
+    detalhes.slice(0, 20).forEach(d => {
+      const l = d.lamina;
+      const badge = (v) => v ? '<span class="badge tag-green">✓</span>' : '<span class="badge tag-gray">—</span>';
+      let sit = '';
+      if (d.tipo === 'nova') sit = '<span class="badge tag-green">Nova</span>';
+      else if (d.tipo === 'completar') sit = '<span class="badge tag-orange">Completar</span>';
+      else sit = `<span class="badge tag-red">Conflito: ${d.conflitos.join(', ')}</span>`;
+      html += `<tr><td><b>${esc(l.animal)}</b></td><td>${esc(l.horario)}</td><td>${esc(l.coleta)}</td><td>${esc(l.tratamento)}</td><td>${badge(l.halo)}</td><td>${badge(l.viab)}</td><td>${badge(l.morfo)}</td><td>${sit}</td></tr>`;
+    });
+    if (detalhes.length > 20) html += `<tr><td colspan="8" style="text-align:center;color:#64748b;">... e mais ${detalhes.length - 20} lâmina(s)</td></tr>`;
+    html += `</tbody></table>`;
+    if (linasSubstituidas > 0) {
+      html += `<div class="aviso aviso-erro" style="margin-top:12px;"><b>Como tratar conflitos?</b><br><label style="display:inline;font-weight:normal;"><input type="radio" name="conf" value="ignorar" checked> Ignorar lâminas com conflito (manter o que já está salvo)</label><br><label style="display:inline;font-weight:normal;"><input type="radio" name="conf" value="substituir"> Substituir pelo valor do arquivo importado</label></div>`;
+    }
+    html += `<div class="acoes"><button class="btn-cancelar" onclick="fecharModal()">✕ Cancelar</button><button class="btn-confirmar" onclick="confirmarImportacao()">✅ Confirmar importação</button></div>`;
+    abrirModal(html);
+  }
+
+  function confirmarImportacao() {
+    if (!importPendente) return;
+    const modo = document.querySelector('input[name="conf"]:checked')?.value || 'ignorar';
+    let adicionadas = 0, completadas = 0, substituidas = 0, ignoradas = 0;
+    importPendente.detalhes.forEach(d => {
+      const imp = d.lamina;
+      const chave = chaveLamina(imp);
+      const idx = laminas.findIndex(l => chaveLamina(l) === chave);
+      if (idx === -1) { laminas.push(imp); adicionadas++; }
+      else {
+        const existente = laminas[idx];
+        const temConflito = ['halo', 'viab', 'morfo'].some(k => imp[k] && existente[k]);
+        if (temConflito && modo === 'ignorar') { ignoradas++; return; }
+        ['halo', 'viab', 'morfo'].forEach(k => { if (imp[k]) { if (!existente[k] || modo === 'substituir') { existente[k] = imp[k]; } } });
+        if (!existente.obs && imp.obs) existente.obs = imp.obs;
+        if (!existente.dataHora && imp.dataHora) existente.dataHora = imp.dataHora;
+        if (temConflito) substituidas++; else completadas++;
+      }
+    });
+    salvarLaminas();
+    renderHistorico();
+    renderProgresso();
+    atualizarBannerBackup();
+    fecharModal();
+    avisar(`✅ Importação concluída!\n\n🆕 Adicionadas: ${adicionadas}\n➕ Completadas: ${completadas}\n🔄 Substituídas: ${substituidas}\n⏭ Ignoradas: ${ignoradas}\n\nTotal no histórico agora: ${laminas.length} lâminas`);
+    importPendente = null;
+  }
+
+  function abrirModal(html) {
+    const antigo = document.getElementById('modal-backdrop'); if (antigo) antigo.remove();
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.id = 'modal-backdrop';
+    backdrop.innerHTML = `<div class="modal">${html}</div>`;
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) fecharModal(); });
+    document.body.appendChild(backdrop);
+  }
+
+  function fecharModal() {
+    const m = document.getElementById('modal-backdrop'); if (m) m.remove();
+    if (_confirmResolve) { const r = _confirmResolve; _confirmResolve = null; r(false); }
+  }
+  function abrirModalErro(msg) { abrirModal(`<h3>❌ Importação</h3><div class="aviso aviso-erro" style="white-space:pre-line;">${esc(msg)}</div><div class="acoes"><button class="btn-cancelar" onclick="fecharModal()">Fechar</button></div>`); }
+
+  /* ================= ESTATÍSTICA ================= */
+  const Est = (() => {
+    function lgamma(x) {
+      const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+      let y = x, tmp = x + 5.5; tmp -= (x + 0.5) * Math.log(tmp);
+      let ser = 1.000000000190015;
+      for (let j = 0; j < 6; j++) ser += c[j] / ++y;
+      return -tmp + Math.log(2.5066282746310005 * ser / x);
+    }
+    function betacf(a, b, x) {
+      const FP = 1e-300; const qab = a + b, qap = a + 1, qam = a - 1;
+      let c = 1, d = 1 - qab * x / qap; if (Math.abs(d) < FP) d = FP; d = 1 / d; let h = d;
+      for (let m = 1; m <= 300; m++) {
+        const m2 = 2 * m;
+        let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+        d = 1 + aa * d; if (Math.abs(d) < FP) d = FP; c = 1 + aa / c; if (Math.abs(c) < FP) c = FP; d = 1 / d; h *= d * c;
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+        d = 1 + aa * d; if (Math.abs(d) < FP) d = FP; c = 1 + aa / c; if (Math.abs(c) < FP) c = FP; d = 1 / d;
+        const del = d * c; h *= del;
+        if (Math.abs(del - 1) < 3e-16) break;
+      }
+      return h;
+    }
+    function ibeta(x, a, b) {
+      if (x <= 0) return 0; if (x >= 1) return 1;
+      const bt = Math.exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+      return x < (a + 1) / (a + b + 2) ? bt * betacf(a, b, x) / a : 1 - bt * betacf(b, a, 1 - x) / b;
+    }
+    function gser(a, x) {
+      if (x <= 0) return 0;
+      let ap = a, sum = 1 / a, del = sum;
+      for (let n = 0; n < 1000; n++) { ap++; del *= x / ap; sum += del; if (Math.abs(del) < Math.abs(sum) * 3e-16) break; }
+      return sum * Math.exp(-x + a * Math.log(x) - lgamma(a));
+    }
+    function gcf(a, x) {
+      const FP = 1e-300; let b = x + 1 - a, c = 1 / FP, d = 1 / b, h = d;
+      for (let i = 1; i < 1000; i++) {
+        const an = -i * (i - a); b += 2;
+        d = an * d + b; if (Math.abs(d) < FP) d = FP; c = b + an / c; if (Math.abs(c) < FP) c = FP; d = 1 / d;
+        const del = d * c; h *= del; if (Math.abs(del - 1) < 3e-16) break;
+      }
+      return Math.exp(-x + a * Math.log(x) - lgamma(a)) * h;
+    }
+    const gammq = (a, x) => x <= 0 ? 1 : (x < a + 1 ? 1 - gser(a, x) : gcf(a, x));
+    function erfc(x) { if (x === 0) return 1; const q = gammq(0.5, x * x); return x > 0 ? q : 2 - q; }
+    const pnorm = z => 0.5 * erfc(-z / Math.SQRT2);
+    function qnorm(p) {
+      const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+      const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+      const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+      const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+      let x;
+      if (p < 0.02425) { const q = Math.sqrt(-2 * Math.log(p)); x = (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+      else if (p <= 1 - 0.02425) { const q = p - 0.5, r = q * q; x = (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5]) * q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
+      else { const q = Math.sqrt(-2 * Math.log(1 - p)); x = -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+      const e = pnorm(x) - p, u = e * Math.sqrt(2 * Math.PI) * Math.exp(x * x / 2);
+      return x - u / (1 + x * u / 2);
+    }
+    const pF = (F, d1, d2) => (!(F > 0) ? 1 : ibeta(d2 / (d2 + d1 * F), d2 / 2, d1 / 2));
+    const pT2 = (t, df) => ibeta(df / (df + t * t), df / 2, 0.5);
+    const pChi = (x, df) => (x <= 0 ? 1 : gammq(df / 2, x / 2));
+
+    // Rotina estatística auxiliar legada, não utilizada na interface atual
+    function swilk(dados) {
+      const x = dados.slice().sort((p, q) => p - q), n = x.length;
+      if (n < 3 || n > 5000) return null;
+      if (x[n - 1] - x[0] < 1e-12) return null; // valores todos iguais
+      const nn2 = Math.floor(n / 2);
+      const poly = (cc, v) => { let r = 0, pw = 1; for (const k of cc) { r += k * pw; pw *= v; } return r; };
+      const c1 = [0, .221157, -.147981, -2.07119, 4.434685, -2.706056], c2 = [0, .042981, -.293762, -1.752461, 5.682633, -3.582633];
+      const c3 = [.544, -.39978, .025054, -6.714e-4], c4 = [1.3822, -.77857, .062767, -.0020322];
+      const c5 = [-1.5861, -.31082, -.083751, .0038915], c6 = [-.4803, -.082676, .0030302], g = [-2.273, .459];
+      const a = new Array(nn2 + 1).fill(0);
+      if (n === 3) a[1] = Math.SQRT1_2;
+      else {
+        const an25 = n + 0.25, m = [0]; let summ2 = 0;
+        for (let i = 1; i <= nn2; i++) { const mi = qnorm((i - 0.375) / an25); m.push(mi); summ2 += mi * mi; }
+        summ2 *= 2; const ss = Math.sqrt(summ2), rsn = 1 / Math.sqrt(n);
+        const a1 = poly(c1, rsn) - m[1] / ss;
+        let i1, fac;
+        if (n > 5) { i1 = 3; const a2 = -m[2] / ss + poly(c2, rsn); fac = Math.sqrt((summ2 - 2*m[1]*m[1] - 2*m[2]*m[2]) / (1 - 2*a1*a1 - 2*a2*a2)); a[2] = a2; }
+        else { i1 = 2; fac = Math.sqrt((summ2 - 2*m[1]*m[1]) / (1 - 2*a1*a1)); }
+        a[1] = a1;
+        for (let i = i1; i <= nn2; i++) a[i] = -m[i] / fac;
+      }
+      const mean = x.reduce((s, v) => s + v, 0) / n; let ssq = 0; x.forEach(v => ssq += (v - mean) * (v - mean));
+      let num = 0; for (let i = 1; i <= nn2; i++) num += a[i] * (x[n - i] - x[i - 1]);
+      const W = Math.min(1, num * num / ssq);
+      if (W >= 1) return { W: 1, p: 1, n };
+      let p;
+      if (n === 3) { p = 1.90985931710274 * (Math.asin(Math.sqrt(W)) - 1.04719755119660); if (p < 0) p = 0; }
+      else {
+        let y = Math.log(1 - W), mu, sg;
+        if (n <= 11) {
+          const gm = poly(g, n); if (y >= gm) return { W, p: 1e-99, n };
+          y = -Math.log(gm - y); mu = poly(c3, n); sg = Math.exp(poly(c4, n));
+        } else { const xx = Math.log(n); mu = poly(c5, xx); sg = Math.exp(poly(c6, xx)); }
+        p = 0.5 * erfc((y - mu) / (sg * Math.SQRT2));
+      }
+      return { W, p: Math.min(1, Math.max(0, p)), n, a };
+    }
+    return { pF, pT2, pChi, pnorm, qnorm, swilk };
+  })();
+
+  /* ----- Álgebra para modelos lineares (efeitos fixos) ----- */
+  const dot = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
+  const media = a => a.reduce((s, v) => s + v, 0) / a.length;
+  const dp = a => { if (a.length < 2) return 0; const m = media(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) * (v - m), 0) / (a.length - 1)); };
+  const mediana = a => { const s = a.slice().sort((p, q) => p - q), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
+
+  function ordenarNiveis(rows, campo, ordem) {
+    const set = new Set(rows.map(r => r[campo]));
+    return ordem.filter(x => set.has(x)).concat([...set].filter(x => !ordem.includes(x)));
+  }
+
+  // termos: lista de termos; cada termo é uma lista de fatores (ex.: ['animal'] ou ['tratamento','horario'])
+  function montarDesign(rows, termos, niveis) {
+    const n = rows.length, cols = [new Array(n).fill(1)], meta = [{ termo: -1, combo: [] }];
+    termos.forEach((termo, ti) => {
+      let combos = [[]];
+      termo.forEach(f => {
+        const nc = [];
+        combos.forEach(c => niveis[f].slice(1).forEach(l => nc.push(c.concat([[f, l]]))));
+        combos = nc;
+      });
+      combos.forEach(c => { cols.push(rows.map(r => c.every(([f, l]) => r[f] === l) ? 1 : 0)); meta.push({ termo: ti, combo: c }); });
+    });
+    return { cols, meta };
+  }
+
+  function ajustar(rows, termos, niveis) {
+    const n = rows.length, y = rows.map(r => r.y);
+    const { cols, meta } = montarDesign(rows, termos, niveis);
+    const Q = [], keep = [];
+    cols.forEach((col, j) => {
+      const n0 = Math.sqrt(dot(col, col)); if (n0 === 0) return;
+      let v = col.slice();
+      for (let pass = 0; pass < 2; pass++) Q.forEach(q => { const d = dot(q, v); for (let i = 0; i < n; i++) v[i] -= d * q[i]; });
+      const nv = Math.sqrt(dot(v, v));
+      if (nv > 1e-8 * n0) { Q.push(v.map(x => x / nv)); keep.push(j); }
+    });
+    const yhat = new Array(n).fill(0);
+    Q.forEach(q => { const d = dot(q, y); for (let i = 0; i < n; i++) yhat[i] += d * q[i]; });
+    const resid = y.map((v, i) => v - yhat[i]);
+    return { n, rank: keep.length, sse: dot(resid, resid), resid, keep, cols, meta };
+  }
+
+  function coeficientes(fit, y) {
+    const Xr = fit.keep.map(j => fit.cols[j]), k = Xr.length;
+    const A = Xr.map((ca, i) => Xr.map((cb, j) => dot(ca, cb)).concat(Array.from({ length: k }, (_, j) => i === j ? 1 : 0)));
+    for (let c = 0; c < k; c++) {
+      let p = c; for (let r = c + 1; r < k; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+      [A[c], A[p]] = [A[p], A[c]];
+      const pv = A[c][c]; for (let j = 0; j < 2 * k; j++) A[c][j] /= pv;
+      for (let r = 0; r < k; r++) if (r !== c) { const f = A[r][c]; if (f !== 0) for (let j = 0; j < 2 * k; j++) A[r][j] -= f * A[c][j]; }
+    }
+    const V = A.map(l => l.slice(k));
+    const Xty = Xr.map(c => dot(c, y));
+    const beta = V.map(l => dot(l, Xty));
+    return { V, beta };
+  }
+
+  const nomeTermo = termo => termo.join(':');
+  function validos(termos, niveis) { return termos.filter(tm => tm.every(f => niveis[f].length >= 2)); }
+
+  function montarAnova(rows, termos, niveis, sequencial) {
+    const full = ajustar(rows, termos, niveis), dfe = full.n - full.rank;
+    if (dfe <= 0) return null;
+    const mse = full.sse / dfe, y = rows.map(r => r.y), ym = media(y);
+    const sst = y.reduce((s, v) => s + (v - ym) * (v - ym), 0);
+    const linhas = [];
+    termos.forEach((tm, k) => {
+      const red = sequencial ? ajustar(rows, termos.slice(0, k), niveis) : ajustar(rows, termos.filter((_, i) => i !== k), niveis);
+      const cheio = sequencial ? ajustar(rows, termos.slice(0, k + 1), niveis) : full;
+      const ss = Math.max(0, red.sse - cheio.sse), df = cheio.rank - red.rank;
+      if (df <= 0) return;
+      const ms = ss / df, F = mse > 0 ? ms / mse : Infinity;
+      linhas.push({ nome: nomeTermo(tm), ss, df, ms, F, p: Est.pF(F, df, dfe), eta: ss / (ss + full.sse) });
+    });
+    return { linhas, resid: { ss: full.sse, df: dfe, ms: mse }, total: { ss: sst, df: full.n - 1 }, fit: full };
+  }
+
+  function levene(resid, grupos, niveisF) {
+    const por = {}; niveisF.forEach(l => por[l] = []);
+    resid.forEach((e, i) => por[grupos[i]].push(e));
+    const z = [], g = [];
+    niveisF.forEach(l => { const med = mediana(por[l]); por[l].forEach(e => { z.push(Math.abs(e - med)); g.push(l); }); });
+    const k = niveisF.length, N = z.length; if (k < 2 || N - k <= 0) return null;
+    const zm = media(z); let ssb = 0, ssw = 0;
+    niveisF.forEach(l => { const zs = z.filter((_, i) => g[i] === l); if (!zs.length) return; const m = media(zs); ssb += zs.length * (m - zm) * (m - zm); zs.forEach(v => ssw += (v - m) * (v - m)); });
+    if (ssw === 0) return null;
+    const F = (ssb / (k - 1)) / (ssw / (N - k));
+    return { F, df1: k - 1, df2: N - k, p: Est.pF(F, k - 1, N - k) };
+  }
+
+  function kruskal(y, grupos, niveisF) {
+    const N = y.length, idx = y.map((v, i) => i).sort((a, b) => y[a] - y[b]), rk = new Array(N);
+    let corr = 0;
+    for (let i = 0; i < N;) { let j = i; while (j + 1 < N && y[idx[j + 1]] === y[idx[i]]) j++; const r = (i + j) / 2 + 1; for (let k = i; k <= j; k++) rk[idx[k]] = r; const tt = j - i + 1; corr += tt * tt * tt - tt; i = j + 1; }
+    let H = 0; const k = niveisF.length;
+    niveisF.forEach(l => { const r = rk.filter((_, i) => grupos[i] === l); if (r.length) { const s = r.reduce((a, b) => a + b, 0); H += s * s / r.length; } });
+    H = 12 / (N * (N + 1)) * H - 3 * (N + 1);
+    const den = 1 - corr / (N * N * N - N); if (den <= 0 || k < 2) return null;
+    H /= den; return { H, df: k - 1, p: Est.pChi(H, k - 1) };
+  }
+
+  function comparacoes(fit, rows, termos, campo, niveisF, dfe, mse) {
+    const ti = termos.findIndex(tm => tm.length === 1 && tm[0] === campo); if (ti < 0) return null;
+    const { V, beta } = coeficientes(fit, rows.map(r => r.y));
+    const pos = {};
+    fit.keep.forEach((j, p) => { const m = fit.meta[j]; if (m.termo === ti) pos[m.combo[0][1]] = p; });
+    const k = fit.keep.length, pares = [], m = niveisF.length * (niveisF.length - 1) / 2;
+    for (let i = 0; i < niveisF.length; i++) for (let j = i + 1; j < niveisF.length; j++) {
+      const c = new Array(k).fill(0); let ok = true;
+      [[niveisF[j], 1], [niveisF[i], -1]].forEach(([l, s]) => { if (l === niveisF[0]) return; if (pos[l] === undefined) ok = false; else c[pos[l]] += s; });
+      if (!ok) { pares.push({ a: niveisF[i], b: niveisF[j], nd: true }); continue; }
+      const diff = dot(c, beta); let v = 0;
+      for (let x = 0; x < k; x++) for (let y2 = 0; y2 < k; y2++) v += c[x] * V[x][y2] * c[y2];
+      const se = Math.sqrt(Math.max(0, mse * v)), tt = se > 0 ? diff / se : 0;
+      const p = Est.pT2(Math.abs(tt), dfe);
+      pares.push({ a: niveisF[i], b: niveisF[j], diff, se, t: tt, p, padj: Math.min(1, p * m) });
+    }
+    return pares;
+  }
+
+  function letras(niveisF, medias, pares, alfa) {
+    const k = niveisF.length; if (k > 8 || pares.some(p => p.nd)) return null;
+    const sig = {}; pares.forEach(p => { sig[p.a + '|' + p.b] = sig[p.b + '|' + p.a] = p.padj < alfa; });
+    const ord = niveisF.map((l, i) => i).sort((a, b) => medias[b] - medias[a]);
+    const cliques = [];
+    for (let mask = 1; mask < (1 << k); mask++) {
+      const mem = []; for (let i = 0; i < k; i++) if (mask & (1 << i)) mem.push(i);
+      if (mem.every((a, ia) => mem.every((b, ib) => ib <= ia || !sig[niveisF[a] + '|' + niveisF[b]]))) cliques.push({ mask, mem });
+    }
+    const max = cliques.filter(c => !cliques.some(d => d.mask !== c.mask && (d.mask & c.mask) === c.mask));
+    max.forEach(c => c.pri = Math.min(...c.mem.map(i => ord.indexOf(i))));
+    max.sort((a, b) => a.pri - b.pri || b.mem.length - a.mem.length);
+    const res = niveisF.map(() => '');
+    max.forEach((c, ci) => c.mem.forEach(i => res[i] += String.fromCharCode(97 + ci)));
+    return res;
+  }
+
+  /* ----- Formatação ----- */
+  const fnum = (x, d = 2) => (x === null || x === undefined || !isFinite(x)) ? '—' : Number(x).toFixed(d).replace('.', ',');
+  const fp = p => (p === null || p === undefined || !isFinite(p)) ? '—' : (p < 0.001 ? '<0,001' : p.toFixed(3).replace('.', ','));
+  function htmlTabela(cab, linhas, destacar) {
+    return `<div class="tab-scroll"><table class="tab-est"><thead><tr>${cab.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${linhas.map((l, i) => `<tr${destacar === i ? ' class="destaque"' : ''}>${l.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+
+  const ROTULO_ANALISE = { halo: '% de fragmentação (Halo)', viab: '% de viabilidade', morfo: '% de defeitos morfológicos' };
+  const ROTULO_FATOR = { animal: 'Animal', tratamento: 'Tratamento', coleta: 'Coleta', horario: 'Horário de resfriamento', 'tratamento:horario': 'Tratamento × Horário' };
+
+  function tabelaAnovaHTML(a, alfa) {
+    const linhas = a.linhas.map(l => [esc(ROTULO_FATOR[l.nome] || l.nome), l.df, fnum(l.ss, 2), fnum(l.ms, 2), fnum(l.F, 2), (l.p < alfa ? '<b>' + fp(l.p) + ' *</b>' : fp(l.p))]);
+    linhas.push(['Resíduo', a.resid.df, fnum(a.resid.ss, 2), fnum(a.resid.ms, 2), '', '']);
+    linhas.push(['Total', a.total.df, fnum(a.total.ss, 2), '', '', '']);
+    return htmlTabela(['Fonte', 'GL', 'SQ', 'QM', 'F', 'p'], linhas);
+  }
+
+  function blocoNormalidade(resid, alfa) {
+    const sw = Est.swilk(resid);
+    if (!sw) return `<div class="est-conclusao ns"></div>`;
+    const ok = sw.p >= alfa;
+    return `<div class="est-conclusao ${ok ? 'sig' : 'alerta'}">${ok ? '✅' : '⚠️'} </div>`;
+  }
+
+  function cardFator(campo, rows, niveis, alfa) {
+    const rot = ROTULO_FATOR[campo], lv = niveis[campo];
+    let h = `<div class="card est-card"><h2>${esc(rot)}</h2>`;
+    if (lv.length < 2) return h + `<p class="nota">Só há 1 nível de ${esc(rot.toLowerCase())} nos dados selecionados, então não há o que comparar.</p></div>`;
+    const termos = validos([['animal'], [campo]], niveis);
+    const a = montarAnova(rows, termos, niveis, false);
+    if (!a) return h + `<p class="nota">Dados insuficientes: há poucas lâminas para este modelo (faltam graus de liberdade do resíduo).</p></div>`;
+    const lf = a.linhas.find(l => l.nome === campo);
+    h += `<div class="est-sub">ANOVA (animal + ${esc(rot.toLowerCase())})</div>` + tabelaAnovaHTML(a, alfa);
+    if (lf) {
+      const sig = lf.p < alfa;
+      h += `<div class="est-conclusao ${sig ? 'sig' : 'ns'}">${sig ? '✅' : '➖'} <b>${esc(rot)}:</b> ${sig ? 'há diferença significativa' : 'sem diferença significativa'} (F = ${fnum(lf.F, 2)}, p = ${fp(lf.p)}; η² parcial = ${fnum(lf.eta, 2)}).</div>`;
+    }
+    // médias
+    const pares = comparacoes(a.fit, rows, termos, campo, lv, a.resid.df, a.resid.ms);
+    const mediasMod = lv.map(l => media(rows.filter(r => r[campo] === l).map(r => r.y)));
+    const L = pares ? letras(lv, mediasMod, pares, alfa) : null;
+    const linhasM = lv.map((l, i) => { const v = rows.filter(r => r[campo] === l).map(r => r.bruto); return [esc(l), v.length, `${fnum(media(v), 1)} ± ${fnum(dp(v) / Math.sqrt(v.length), 1)}`, fnum(dp(v), 1), L ? `<b>${L[i]}</b>` : '—']; });
+    h += `<div class="est-sub">Médias (% original) ± erro padrão</div>` + htmlTabela([esc(rot), 'n', 'Média ± EP', 'DP', 'Grupo'], linhasM);
+    if (L) h += `<p class="nota" style="margin:0;">Letras diferentes = diferença significativa (Bonferroni, α = ${fnum(alfa, 2)}).</p>`;
+    // Comparações par a par com correção de Bonferroni são mantidas abaixo.
+    // pares
+    if (pares && pares.length) {
+      const lp = pares.map(p => p.nd ? [esc(p.b) + ' − ' + esc(p.a), '—', '—', '—'] : [esc(p.b) + ' − ' + esc(p.a), fnum(p.diff, 2), fnum(p.t, 2), (p.padj < alfa ? '<b>' + fp(p.padj) + ' *</b>' : fp(p.padj))]);
+      h += `<details class="est-det"><summary>Comparações par a par (Bonferroni)</summary>${htmlTabela(['Comparação', 'Dif.', 't', 'p ajust.'], lp)}<p class="nota">Diferença na escala usada na análise${'' }; p já corrigido pelo nº de comparações.</p></details>`;
+    }
+    return h + '</div>';
+  }
+
+  function cardConjunto(rows, niveis, alfa) {
+    let h = `<div class="card est-card"><h2>Modelo conjunto</h2><p class="nota">Animal + tratamento + coleta + horário no mesmo modelo (sem interações). Cada fator é testado já descontando os outros.</p>`;
+    const termos = validos([['animal'], ['tratamento'], ['coleta'], ['horario']], niveis);
+    const a = montarAnova(rows, termos, niveis, false);
+    if (!a) return h + `<p class="nota">Dados insuficientes para este modelo (poucas lâminas).</p></div>`;
+    h += tabelaAnovaHTML(a, alfa);
+    return h + '</div>';
+  }
+
+  function cardInteracao(rows, niveis, alfa) {
+    let h = `<div class="card est-card"><h2>Interação Tratamento × Horário</h2><p class="nota">Testa se o efeito do tratamento muda ao longo do resfriamento (soma de quadrados sequencial: animal → tratamento → horário → interação).</p>`;
+    if (niveis.tratamento.length < 2 || niveis.horario.length < 2) return h + `<p class="nota">É preciso ter pelo menos 2 tratamentos e 2 horários nos dados.</p></div>`;
+    const termos = validos([['animal'], ['tratamento'], ['horario'], ['tratamento', 'horario']], niveis);
+    const a = montarAnova(rows, termos, niveis, true);
+    if (!a) return h + `<p class="nota">Dados insuficientes: há poucas lâminas para estimar a interação.</p></div>`;
+    h += tabelaAnovaHTML(a, alfa);
+    const li = a.linhas.find(l => l.nome === 'tratamento:horario');
+    if (li) { const sig = li.p < alfa; h += `<div class="est-conclusao ${sig ? 'sig' : 'ns'}">${sig ? '✅ Interação significativa: o efeito do tratamento depende do horário' : '➖ Sem interação significativa'} (F = ${fnum(li.F, 2)}, p = ${fp(li.p)}).</div>`; }
+    else h += `<p class="nota">A interação não pôde ser estimada com as combinações disponíveis.</p>`;
+    return h + '</div>';
+  }
+
+  function calcularEstatistica() {
+    const out = document.getElementById('est-resultado');
+    try {
+      const analise = document.getElementById('est-analise').value;
+      const transf = document.getElementById('est-transf').value;
+      const alfa = parseFloat(document.getElementById('est-alfa').value) || 0.05;
+      const filtros = { tratamento: document.getElementById('est-f-trat').value, horario: document.getElementById('est-f-hor').value, coleta: document.getElementById('est-f-col').value };
+      const campo = { halo: l => l.halo && l.halo.pctFragmentacao, viab: l => l.viab && l.viab.pctViabilidade, morfo: l => l.morfo && l.morfo.pctDefeitos }[analise];
+      const T = v => transf === 'arcsen' ? Math.asin(Math.sqrt(Math.min(100, Math.max(0, v)) / 100)) * 180 / Math.PI : v;
+      const rows = laminas.filter(l => { const v = campo(l); return v !== null && v !== undefined && isFinite(v) && Object.keys(filtros).every(f => !filtros[f] || l[f] === filtros[f]); })
+        .map(l => { const v = Number(campo(l)); return { animal: l.animal, tratamento: l.tratamento, coleta: l.coleta, horario: l.horario, bruto: v, y: T(v) }; });
+      if (rows.length < 6) { out.innerHTML = `<div class="card"><p class="nota">Poucas lâminas com ${esc(ROTULO_ANALISE[analise])} (${rows.length}). São necessárias pelo menos 6 para calcular.</p></div>`; return; }
+      const niveis = { animal: ordenarNiveis(rows, 'animal', ANIMAIS), tratamento: ordenarNiveis(rows, 'tratamento', TRATAMENTOS), coleta: ordenarNiveis(rows, 'coleta', COLETAS), horario: ordenarNiveis(rows, 'horario', HORARIOS) };
+      let h = `<div class="card est-card"><h2>Resumo</h2><p class="nota" style="margin:0;"><b>${esc(ROTULO_ANALISE[analise])}</b> · ${rows.length} lâminas · ${niveis.animal.length} animal(is) · transformação: ${transf === 'arcsen' ? 'arco-seno da raiz' : 'nenhuma'} · α = ${fnum(alfa, 2)}. Valores de p marcados com * são significativos.</p></div>`;
+      ['tratamento', 'coleta', 'horario'].forEach(f => h += cardFator(f, rows, niveis, alfa));
+      h += cardConjunto(rows, niveis, alfa) + cardInteracao(rows, niveis, alfa);
+      h += `<details class="est-det card"><summary>Como ler estes resultados</summary>
+        <p class="nota">• <b>ANOVA:</b> cada lâmina é uma observação; o animal entra como efeito fixo (como um "bloco"), então a comparação do fator já desconta as diferenças entre animais. p abaixo do nível escolhido = diferença significativa.<br>
+        • <b>η² parcial:</b> tamanho do efeito (0 a 1).<br>
+        • <b>Letras:</b> médias com a mesma letra não diferem (comparações par a par com correção de Bonferroni).<br>
+        • Como não há repetição dentro de cada combinação animal × tratamento × coleta × horário, interações com animal não são estimadas.</p></details>`;
+      out.innerHTML = h;
+      renderGrafico();
+      out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+      out.innerHTML = `<div class="card"><p class="nota">❌ Erro ao calcular: ${esc(e.message)}</p></div>`;
+    }
+  }
+
+  /* ================= GRÁFICO DE EVOLUÇÃO ================= */
+  const COR_TRAT = { Controle: '#94a3b8', M1: '#a855f7', M2: '#10b981', M3: '#f59e0b' };
+  function passoBonito(x) { const e = Math.pow(10, Math.floor(Math.log10(x))), f = x / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e; }
+
+  function renderGrafico() {
+    const cont = document.getElementById('grafico-evolucao'), tab = document.getElementById('grafico-tabela');
+    if (!cont) return;
+    const analise = document.getElementById('est-analise').value, fa = document.getElementById('graf-animal').value, fc = document.getElementById('graf-coleta').value, mostrarEP = !!document.getElementById('graf-ep')?.checked;
+    const campo = { halo: l => l.halo && l.halo.pctFragmentacao, viab: l => l.viab && l.viab.pctViabilidade, morfo: l => l.morfo && l.morfo.pctDefeitos }[analise];
+    const dados = laminas.filter(l => { const v = campo(l); return v !== null && v !== undefined && (!fa || l.animal === fa) && (!fc || l.coleta === fc); });
+    if (!dados.length) { cont.innerHTML = '<p class="empty">Sem lâminas com essa análise para os filtros escolhidos.</p>'; tab.innerHTML = ''; return; }
+
+    const trats = ordenarNiveis(dados, 'tratamento', TRATAMENTOS), hors = ordenarNiveis(dados, 'horario', HORARIOS).sort((a, b) => parseFloat(a) - parseFloat(b));
+    const pts = {}; // trat -> horario -> {n, m, se}
+    trats.forEach(tr => { pts[tr] = {}; hors.forEach(h => { const v = dados.filter(l => l.tratamento === tr && l.horario === h).map(l => Number(campo(l))); if (v.length) pts[tr][h] = { n: v.length, m: media(v), se: v.length > 1 ? dp(v) / Math.sqrt(v.length) : 0 }; }); });
+
+    let lo = Infinity, hi = -Infinity;
+    trats.forEach(tr => Object.values(pts[tr]).forEach(p => { lo = Math.min(lo, p.m - (mostrarEP ? p.se : 0)); hi = Math.max(hi, p.m + (mostrarEP ? p.se : 0)); }));
+    const folga = Math.max((hi - lo) * 0.1, 1); lo = Math.max(0, lo - folga); hi = Math.min(100, hi + folga);
+    const passo = passoBonito((hi - lo) / 5); const y0 = Math.max(0, Math.floor(lo / passo) * passo), y1 = Math.min(100, Math.ceil(hi / passo) * passo);
+    const W = 360, H = 330, ml = 46, mr = 14, mt = 46, mb = 86, pw = W - ml - mr, ph = H - mt - mb;
+    const xmax = Math.max(...hors.map(parseFloat), 1), X = h => ml + parseFloat(h) / xmax * pw, Y = v => mt + (1 - (v - y0) / ((y1 - y0) || 1)) * ph;
+    const nome = { halo: '% fragmentação (Halo)', viab: '% viabilidade', morfo: '% defeitos' }[analise];
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="sans-serif">`;
+    s += `<rect width="${W}" height="${H}" fill="#12121a"/>`;
+    s += `<text x="${ml}" y="20" font-size="13" font-weight="700" fill="#ffffff">${esc(nome)} × tempo de resfriamento</text>`;
+    s += `<text x="${ml}" y="35" font-size="10" fill="#8b8b9e">Animal: ${esc(fa || 'todos')} · Coleta: ${esc(fc || 'todas')} · média${mostrarEP ? ' ± EP' : ''}</text>`;
+    for (let v = y0; v <= y1 + 1e-9; v += passo) { const yy = Y(v); s += `<line x1="${ml}" x2="${W - mr}" y1="${yy}" y2="${yy}" stroke="#ffffff" stroke-opacity="0.08"/><text x="${ml - 6}" y="${yy + 3}" font-size="10" fill="#8b8b9e" text-anchor="end">${fnum(v, passo < 1 ? 1 : 0)}</text>`; }
+    hors.forEach(h => { s += `<line x1="${X(h)}" x2="${X(h)}" y1="${mt}" y2="${mt + ph}" stroke="#ffffff" stroke-opacity="0.05"/><text x="${X(h)}" y="${mt + ph + 14}" font-size="10" fill="#8b8b9e" text-anchor="middle">${esc(h)}</text>`; });
+    s += `<line x1="${ml}" x2="${ml}" y1="${mt}" y2="${mt + ph}" stroke="#8b8b9e"/><line x1="${ml}" x2="${W - mr}" y1="${mt + ph}" y2="${mt + ph}" stroke="#8b8b9e"/>`;
+    s += `<text x="${ml + pw / 2}" y="${mt + ph + 30}" font-size="10" fill="#cbd5e1" text-anchor="middle">Tempo de resfriamento (h)</text>`;
+    s += `<text transform="translate(12 ${mt + ph / 2}) rotate(-90)" font-size="10" fill="#cbd5e1" text-anchor="middle">${esc(nome)}</text>`;
+    trats.forEach((tr, ti) => {
+      const cor = COR_TRAT[tr] || '#38bdf8', dx = (ti - (trats.length - 1) / 2) * 4, linha = [];
+      hors.forEach(h => { const p = pts[tr][h]; if (!p) return; const x = X(h) + dx, y = Y(p.m); linha.push([x, y]);
+        if (mostrarEP && p.se > 0) s += `<line x1="${x}" x2="${x}" y1="${Y(p.m - p.se)}" y2="${Y(p.m + p.se)}" stroke="${cor}" stroke-width="1.4"/><line x1="${x - 3}" x2="${x + 3}" y1="${Y(p.m - p.se)}" y2="${Y(p.m - p.se)}" stroke="${cor}" stroke-width="1.4"/><line x1="${x - 3}" x2="${x + 3}" y1="${Y(p.m + p.se)}" y2="${Y(p.m + p.se)}" stroke="${cor}" stroke-width="1.4"/>`; });
+      if (linha.length > 1) s += `<polyline points="${linha.map(p => p.join(',')).join(' ')}" fill="none" stroke="${cor}" stroke-width="2"/>`;
+      linha.forEach(([x, y]) => s += `<circle cx="${x}" cy="${y}" r="3.5" fill="${cor}" stroke="#12121a" stroke-width="1"/>`);
+      const lx = ml + ti * (pw / trats.length); s += `<line x1="${lx}" x2="${lx + 16}" y1="${H - 22}" y2="${H - 22}" stroke="${cor}" stroke-width="3"/><text x="${lx + 21}" y="${H - 18}" font-size="10" fill="#cbd5e1">${esc(tr)}</text>`;
+    });
+    cont.innerHTML = s + '</svg>';
+
+    const linhasT = trats.map(tr => [esc(tr)].concat(hors.map(h => { const p = pts[tr][h]; return p ? `${fnum(p.m, 1)}${mostrarEP ? ` ± ${fnum(p.se, 1)}` : ''} <span style="color:var(--text-muted)">(${p.n})</span>` : '—'; })));
+    tab.innerHTML = `<div class="est-sub">Médias${mostrarEP ? ' ± EP' : ''} (n lâminas)</div>` + htmlTabela(['Tratamento'].concat(hors.map(esc)), linhasT);
+  }
+
+  function baixarGraficoPNG() {
+    const svg = document.querySelector('#grafico-evolucao svg');
+    if (!svg) { toast('⚠ Não há gráfico para baixar.', 'aviso'); return; }
+    const xml = new XMLSerializer().serializeToString(svg);
+    const w = parseInt(svg.getAttribute('width'), 10), h = parseInt(svg.getAttribute('height'), 10), esc3 = 3;
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = w * esc3; c.height = h * esc3;
+      const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(b => {
+        if (!b) { toast('❌ Não foi possível gerar a imagem.', 'erro'); return; }
+        const url = URL.createObjectURL(b), a = document.createElement('a');
+        a.href = url; a.download = `grafico_evolucao_${stamp()}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        toast('⬇ Gráfico baixado.', 'ok');
+      }, 'image/png');
+    };
+    img.onerror = () => toast('❌ Não foi possível gerar a imagem.', 'erro');
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+  }
+
+
+  /* ================= PROGRESSO, HISTÓRICO E RELATÓRIOS REFORMULADOS ================= */
+  function totalCombinacoes(){ return HORARIOS.length * COLETAS.length * TRATAMENTOS.length; }
+  function chavePendencia(a,h,c,t){ return `${a}|${h}|${c}|${t}`; }
+  function obterEstado(a,h,c,t){
+    const l=laminas.find(x=>chaveLamina(x)===chavePendencia(a,h,c,t));
+    if(l && l.halo && l.viab && l.morfo) return 'done';
+    if(pendenciasPerdidas.includes(chavePendencia(a,h,c,t))) return 'lost';
+    if(l && (l.halo || l.viab || l.morfo)) return 'partial';
+    return 'pending';
+  }
+  function preencherIdentificacao(a,h,c,t){
+    document.getElementById('animal').value=a; document.getElementById('horario').value=h;
+    document.getElementById('coleta').value=c; document.getElementById('tratamento').value=t;
+    const anterior=laminas.find(l=>chaveLamina(l)===chavePendencia(a,h,c,t)); document.getElementById('obs').value=anterior?.obs||''; abrindoPendente=true; mostrarTela('contagem'); iniciarAnalise();
+  }
+  function obterEstadoAnalise(a,h,c,t,analise){
+    const k=chavePendencia(a,h,c,t);
+    if(pendenciasPerdidas.includes(k)) return 'lost';
+    const l=laminas.find(x=>chaveLamina(x)===k);
+    if(!l) return 'pending';
+    if(analise==='todas') return obterEstado(a,h,c,t);
+    return l[analise] ? 'done' : 'pending';
+  }
+  function renderProgresso(){
+    const el=document.getElementById('progresso-grade'); if(!el)return;
+    const analise=document.getElementById('progresso-analise')?.value||'todas';
+    const total=totalCombinacoes(); let html='';
+    const nome=({todas:'todas as análises',halo:'Halo',viab:'Viabilidade',morfo:'Morfologia'})[analise];
+    ANIMAIS.forEach(a=>{
+      let feitas=0, perdidas=0; const cells=[];
+      HORARIOS.forEach(h=>COLETAS.forEach(c=>TRATAMENTOS.forEach(t=>{
+        const st=obterEstadoAnalise(a,h,c,t,analise); if(st==='done')feitas++; if(st==='lost')perdidas++;
+        const acao=st==='lost'?`reativarPendente('${a}','${h}','${c}','${t}')`:`preencherIdentificacao('${a}','${h}','${c}','${t}')`;
+        cells.push(`<div class="progress-cell ${st==='done'?'done':st==='lost'?'lost':''}"><button title="${a} · ${h} · C${c} · ${t}" onclick="${acao}">${st==='done'?'■':st==='lost'?'—':'□'}<br>${h}<br>C${c} ${t}</button></div>`);
+      })));
+      html+=`<div class="progress-animal"><b>${a}</b> <span style="color:var(--text-muted)">${feitas} de ${total} concluídas em ${nome} · faltam ${Math.max(0,total-feitas-perdidas)} · ${perdidas} não analisáveis</span><div class="progress-grid">${cells.join('')}</div></div>`;
+    }); el.innerHTML=html;
+  }
+  function proximaPendente(){
+    const analise=document.getElementById('progresso-analise')?.value||'todas';
+    for(const a of ANIMAIS)for(const h of HORARIOS)for(const c of COLETAS)for(const t of TRATAMENTOS)
+      if(['pending','partial'].includes(obterEstadoAnalise(a,h,c,t,analise))){preencherIdentificacao(a,h,c,t);return;}
+    toast('Não há lâminas pendentes para a análise selecionada.', 'ok');
+  }
+  async function marcarNaoAnalisavel(){
+    if(!laminaAtual)return;
+    const k=chaveLamina(laminaAtual); if(!confirm('Marcar esta lâmina como perdida/não analisável?'))return;
+    if(!pendenciasPerdidas.includes(k))pendenciasPerdidas.push(k);
+    localStorage.setItem('ae_laminas_nao_analisaveis',JSON.stringify(pendenciasPerdidas));
+    laminaAtual=null; salvarSessao(); mostrarTela('progresso'); renderProgresso();
+  }
+  function reativarPendente(a,h,c,t){pendenciasPerdidas=pendenciasPerdidas.filter(k=>k!==chavePendencia(a,h,c,t));localStorage.setItem('ae_laminas_nao_analisaveis',JSON.stringify(pendenciasPerdidas));renderProgresso();}
+  function editarObservacao(i){const l=laminas[i];if(!l)return;const nova=prompt('Editar observação da lâmina:',l.obs||'');if(nova===null)return;l.obs=nova;salvarLaminas();renderHistorico();}
+  function carregarMaisHistorico(){histLimite+=30;renderHistorico();}
+  function gerarRelatorioFormatado(tipo){
+    const animal=document.getElementById('pdf-animal').value, trat=document.getElementById('pdf-tratamento').value;
+    const ds=laminas.filter(l=>(!animal||l.animal===animal)&&(!trat||l.tratamento===trat));
+    if(!ds.length){toast('Não há registros para os filtros escolhidos.','aviso');return;}
+    const analises=[['halo','Fragmentação (Halo)','pctFragmentacao'],['viab','Viabilidade','pctViabilidade'],['morfo','Defeitos morfológicos','pctDefeitos']];
+    const valor=(l,a)=>l[a[0]]?Number(l[a[0]][a[2]]):null;
+    let body='';
+    if(tipo==='resumo'){
+      body+=`<h1>Resumo da análise espermática</h1><p>Gerado em ${new Date().toLocaleDateString('pt-BR')} · ${ds.length} lâminas</p><h2>Progresso por animal e análise</h2><table><thead><tr><th>Animal</th><th>Halo</th><th>Viabilidade</th><th>Morfologia</th><th>Lâminas completas</th><th>Faltam</th><th>Não analisáveis</th></tr></thead><tbody>`;
+      ANIMAIS.filter(a=>!animal||a===animal).forEach(a=>{const count=key=>HORARIOS.flatMap(h=>COLETAS.flatMap(c=>TRATAMENTOS.map(t=>laminas.find(l=>chaveLamina(l)===chavePendencia(a,h,c,t))?.[key]?1:0))).reduce((x,y)=>x+y,0);const done=HORARIOS.flatMap(h=>COLETAS.flatMap(c=>TRATAMENTOS.map(t=>obterEstado(a,h,c,t)))).filter(x=>x==='done').length;const lost=pendenciasPerdidas.filter(k=>k.startsWith(a+'|')).length;body+=`<tr><td>${a}</td><td>${count('halo')} de ${totalCombinacoes()}</td><td>${count('viab')} de ${totalCombinacoes()}</td><td>${count('morfo')} de ${totalCombinacoes()}</td><td>${done}</td><td>${Math.max(0,totalCombinacoes()-done-lost)}</td><td>${lost}</td></tr>`;});
+      body+='</tbody></table><h2>Média por tratamento</h2><table><thead><tr><th>Análise</th><th>Tratamento</th><th>Média (%)</th><th>n</th></tr></thead><tbody>';
+      analises.forEach(a=>TRATAMENTOS.filter(t=>!trat||t===trat).forEach(t=>{const v=ds.filter(l=>l.tratamento===t&&valor(l,a)!==null).map(l=>valor(l,a));body+=`<tr><td>${a[1]}</td><td>${t}</td><td>${v.length?fnum(media(v),1):'—'}</td><td>${v.length}</td></tr>`;}));body+='</tbody></table>';
+      body+='<h2>Tabela compacta — tratamento × horário</h2>';
+      analises.forEach(a=>{body+=`<h3>${a[1]}</h3><table><thead><tr><th>Tratamento</th>${HORARIOS.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>`;TRATAMENTOS.filter(t=>!trat||t===trat).forEach(t=>{body+=`<tr><td>${t}</td>${HORARIOS.map(h=>{const v=ds.filter(l=>l.tratamento===t&&l.horario===h&&valor(l,a)!==null).map(l=>valor(l,a));return `<td>${v.length?fnum(media(v),1)+'%':'—'}</td>`}).join('')}</tr>`});body+='</tbody></table>';});
+    } else if(tipo==='fichas'){
+      ANIMAIS.filter(a=>!animal||a===animal).forEach((a,ix)=>{if(ix)body+='<div class="page-break"></div>';body+=`<h1>Ficha do animal ${a}</h1>`;analises.forEach(an=>{body+=`<h2>${an[1]}</h2><table><thead><tr><th>Horário / Coleta</th>${TRATAMENTOS.filter(t=>!trat||t===trat).map(t=>`<th>${t}</th>`).join('')}</tr></thead><tbody>`;HORARIOS.forEach(h=>COLETAS.forEach(c=>{body+=`<tr><td>${h} / C${c}</td>${TRATAMENTOS.filter(t=>!trat||t===trat).map(t=>{const l=ds.find(x=>x.animal===a&&x.horario===h&&x.coleta===c&&x.tratamento===t);const v=l&&valor(l,an);return `<td>${v===null||v===undefined?'—':fnum(v,1)+'%'}</td>`}).join('')}</tr>`}));body+='</tbody></table>';});});
+    } else {
+      body+='<h1>Lista completa de lâminas</h1><table><thead><tr><th>Animal</th><th>Horário</th><th>Coleta</th><th>Tratamento</th><th>Halo (%)</th><th>Vivo reagido</th><th>Vivo íntegro</th><th>Morto reagido</th><th>Morto íntegro</th><th>Viabilidade (%)</th><th>Defeitos (%)</th><th>Data</th></tr></thead><tbody>';
+      ds.forEach(l=>body+=`<tr><td>${l.animal}</td><td>${l.horario}</td><td>${l.coleta}</td><td>${l.tratamento}</td><td>${l.halo?fnum(l.halo.pctFragmentacao,1):'—'}</td><td>${l.viab?(l.viab.vivo_reagido??'—'):'—'}</td><td>${l.viab?(l.viab.vivo_integro??'—'):'—'}</td><td>${l.viab?(l.viab.morto_reagido??'—'):'—'}</td><td>${l.viab?(l.viab.morto_integro??'—'):'—'}</td><td>${l.viab?fnum(l.viab.pctViabilidade,1):'—'}</td><td>${l.morfo?fnum(l.morfo.pctDefeitos,1):'—'}</td><td>${esc(fmtData(l.dataHora))}</td></tr>`);
+      body+='</tbody></table>';
+    }
+    const w=window.open('','_blank');if(!w){toast('Permita pop-ups para gerar o PDF.','aviso');return;}
+    w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório</title><style>@page{size:A4 landscape;margin:12mm;@bottom-right{content:"Página " counter(page) " de " counter(pages);font:9px Arial;color:#555}}body{font:11px Arial;color:#111}h1{font-size:19px}h2{font-size:14px;margin-top:18px}table{width:100%;border-collapse:collapse;margin:8px 0 16px}th,td{border:1px solid #bbb;padding:5px;text-align:left}th{background:#ddd}tbody tr:nth-child(even){background:#f2f2f2}.page-break{break-before:page}@media screen{body{padding:20px;max-width:1100px;margin:auto}}</style></head><body>${body}<script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>`);w.document.close();
+  }
+  function gerarPDF(tipo){ gerarRelatorioFormatado('lista'); }
+  function gerarPDFEstatistica(){
+    const resultado=document.getElementById('est-resultado');if(!resultado.innerHTML.trim()){toast('Calcule a análise antes de gerar o PDF.','aviso');return;}
+    const graf=document.getElementById('grafico-evolucao').innerHTML, tabela=document.getElementById('grafico-tabela').innerHTML;
+    const w=window.open('','_blank');if(!w){toast('Permita pop-ups para gerar o PDF.','aviso');return;}
+    const nome=document.getElementById('est-analise').selectedOptions[0].text;
+    w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>PDF da estatística</title><style>@page{size:A4 landscape;margin:12mm;@bottom-right{content:"Página " counter(page) " de " counter(pages);font:9px Arial;color:#555}}body{font:10px Arial;color:#111}h1,h2{font-size:16px}table{width:100%;border-collapse:collapse;margin:8px 0}td,th{border:1px solid #bbb;padding:5px}th{background:#ddd}tr:nth-child(even){background:#f2f2f2}.card{break-inside:avoid}.est-conclusao{margin:6px 0;padding:5px;border:1px solid #bbb}.nota{font-size:10px}svg{max-width:600px;max-height:380px}</style></head><body><h1>Relatório estatístico — ${nome}</h1><p>Gerado em ${new Date().toLocaleDateString('pt-BR')}</p>${resultado.innerHTML}<h2>Gráfico de evolução</h2>${graf}${tabela}<script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>`);w.document.close();
+  }
+
+  /* ================= ATALHOS DE TECLADO ================= */
+  let keysPressed = {};
+  const TECLAS_VIAB = { s: 'vivo_reagido', d: 'vivo_integro', w: 'morto_reagido', e: 'morto_integro' };
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('modal-backdrop')) { fecharModal(); return; }
+    if (document.getElementById('modal-backdrop')) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if (document.getElementById('tela-contagem').classList.contains('hidden')) return;
+    const key = e.key.toLowerCase();
+    const permitidas = abaAtiva === 'viab' ? ['s','d','w','e','z'] : ['s','d','z'];
+    if (!permitidas.includes(key)) return;
+    e.preventDefault();
+    if (keysPressed[key]) return;
+    keysPressed[key] = true;
+    if (key === 'z') { desfazer(abaAtiva); return; }
+    if (abaAtiva === 'halo') registrar('halo', key === 's' ? 'halo' : 'sem');
+    else if (abaAtiva === 'viab' && TECLAS_VIAB[key]) registrar('viab', TECLAS_VIAB[key]);
+  });
+  document.addEventListener('keyup', function(e) { keysPressed[e.key.toLowerCase()] = false; });
+
+  /* ===== Bloqueia menu de seleção / menu de contexto fora dos campos de texto ===== */
+  const ehCampoTexto = el => !!(el && el.closest && el.closest('input, textarea, select, #est-resultado'));
+  document.addEventListener('contextmenu', e => { if (!ehCampoTexto(e.target)) e.preventDefault(); });
+  document.addEventListener('selectstart', e => { if (!ehCampoTexto(e.target)) e.preventDefault(); });
+
+  /* ===== Eventos de ciclo de vida ===== */
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) salvarSessao();
+    else if (laminaAtual) ativarWakeLock();
+  });
+  window.addEventListener('pagehide', salvarSessao);
+
+  /* PWA: funciona quando publicado em HTTPS (GitHub Pages/Netlify/Cloudflare Pages). */
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) { window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
+
+  /* ================= INICIALIZAÇÃO ================= */
+  (function init() {
+    const metaSalva = parseInt(localStorage.getItem('ae_meta'), 10);
+    if (METAS_DISPONIVEIS.includes(metaSalva)) META = metaSalva;
+    montarSelects();
+    atualizarMeta();
+    atualizarToggles();
+    renderHistorico();
+    renderProgresso();
+    atualizarBannerBackup();
+    atualizarBotaoReabrir();
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+    if (dadosCorrompidos) toast('⚠ Os dados salvos estavam corrompidos. Uma cópia foi guardada no navegador; restaure um backup .json.', 'erro', 10000);
+    restaurarSessao();
+  })();
+</script>
+</body>
+</html>
